@@ -21,7 +21,9 @@ export function readWorkspace(value:unknown):AppState {
  const c=value.provider;requireValue(obj(c)&&['openai','gemini','claude','compatible','ollama'].includes(String(c.provider))&&string(c.model)&&string(c.baseUrl),'provider configuration');
  requireValue(obj(value.design)&&['diagram','notes','requirements'].every(k=>string((value.design as Record<string,unknown>)[k])),'design notes');
  requireValue(string(value.code)&&string(value.codeLanguage),'coding workspace');requireValue(value.theme==='dark'||value.theme==='light','theme');requireValue(typeof value.fontSize==='number'&&[14,15,17].includes(value.fontSize),'font size');requireValue(typeof value.reducedMotion==='boolean','motion preference');
+ if(value.shadowSettings!==undefined)requireValue(obj(value.shadowSettings)&&['autoAnswer','useContext','remember'].every(k=>typeof (value.shadowSettings as Record<string,unknown>)[k]==='boolean'),'Shadow preferences');
  const result={...initialState};for(const k of Object.keys(initialState) as (keyof AppState)[])(result as unknown as Record<string,unknown>)[k]=value[k];
  result.provider={provider:c.provider as AppState['provider']['provider'],model:c.model,baseUrl:c.baseUrl,configured:c.provider==='ollama'};
+ result.shadowSettings=value.shadowSettings as AppState['shadowSettings']??{autoAnswer:true,useContext:true,remember:true};
  return result;
 }

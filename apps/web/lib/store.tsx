@@ -4,10 +4,11 @@ import type { AppState } from './types';
 import { initialState } from './core';
 import { readWorkspace } from './validation';
 const STORAGE='openinterview-workspace-v1';
-const Context=createContext<{state:AppState;setState:Dispatch<SetStateAction<AppState>>;ready:boolean;storageError:string;reset:()=>void;restore:(data:AppState)=>void;flushWorkspace:()=>Promise<void>;suspendPersistence:()=>void;resumePersistence:()=>void}|null>(null);
+const Context=createContext<{state:AppState;setState:Dispatch<SetStateAction<AppState>>;getWorkspace:()=>AppState;ready:boolean;storageError:string;reset:()=>void;restore:(data:AppState)=>void;flushWorkspace:()=>Promise<void>;suspendPersistence:()=>void;resumePersistence:()=>void}|null>(null);
 export function StoreProvider({children}:{children:React.ReactNode}){
  const [state,renderState]=useState<AppState>(initialState);const [ready,setReady]=useState(false);const [storageError,setStorageError]=useState('');const [writable,setWritable]=useState(true);
  const latest=useRef(state);
+ const getWorkspace=useCallback(()=>latest.current,[]);
  // Flush can follow a state update in the same event, before React renders.
  const setState=useCallback<Dispatch<SetStateAction<AppState>>>(update=>{const next=typeof update==='function'?update(latest.current):update;latest.current=next;renderState(next);},[]);
  const status=useRef({ready:false,writable:true,suspended:false,epoch:0});status.current.ready=ready;status.current.writable=writable;
@@ -35,7 +36,7 @@ export function StoreProvider({children}:{children:React.ReactNode}){
  useEffect(()=>{if(!ready)return;document.documentElement.dataset.theme=state.theme;document.documentElement.style.fontSize=`${state.fontSize}px`;document.documentElement.dataset.reducedMotion=String(state.reducedMotion);if(!writable||status.current.suspended)return;void persist(state).catch(()=>setStorageError('Workspace could not be saved. Export a backup now.'));},[state,ready,writable,persist]);
  function reset(){status.current.epoch++;status.current.suspended=false;setState(initialState);setWritable(true);setStorageError('');}
  function restore(data:AppState){status.current.epoch++;setState(readWorkspace(data));setWritable(true);setStorageError('');}
- return <Context.Provider value={{state,setState,ready,storageError,reset,restore,flushWorkspace,suspendPersistence,resumePersistence}}>{children}</Context.Provider>;
+ return <Context.Provider value={{state,setState,getWorkspace,ready,storageError,reset,restore,flushWorkspace,suspendPersistence,resumePersistence}}>{children}</Context.Provider>;
 }
 export function useStore(){const value=useContext(Context);if(!value)throw Error('Workspace provider missing');return value;}
 

@@ -1,5 +1,13 @@
 # Validation record — 2026-11-25
 
+## Automatic grounded answers 0.4.0 — 2026-11-26 IST
+
+- Final PC questions enter a bounded FIFO after a 180 ms delay. Questions arriving during generation wait for the current answer; short follow-ups, duplicate turn IDs, repeated questions with distinct IDs, microphone opt-in, cancellation and session changes have dedicated coverage. Auto/context/memory settings persist; recording never starts automatically.
+- All 70 web unit tests, 40 desktop unit tests and 20 Chrome workflows pass. Production build and both TypeScript workspaces pass. Private retrieval uses encrypted SQLite shards and returns at most 6500 source characters per query, while answer prompts separately reserve resume and conversation memory budgets.
+- The real-provider desktop E2E sent synthetic PC speech through the actual AudioWorklet, realtime transcription, native private-source retrieval and OpenAI answer streaming. A project-specific answer used a synthetic private code fact, a spoken “Why?” used the first answer, and a fresh session after reload received that earlier response. Observed finalized-question→first-answer-token latency was 2327 ms, including local retrieval and the external provider. No physical microphone was opened.
+- Windows setup exited 0 and installed version 0.4.0. All 318 installed web files match the tested export. Read-only checks confirmed the private resume, four project corpora, earlier Aster responses, enabled auto/context/memory preferences and a configured OpenAI answer model. Personal contents remain outside this repository and public build outputs; an encrypted workspace backup precedes import.
+- The installed full-screen capture A-B-A test passed again (marker ratios 1.0 / 0.0 / 1.0; underlying synthetic background 1.0 while protected). This is the tested Windows full-monitor capture path, not a guarantee for every portal.
+
 ## Realtime audio 0.3.0 — 2026-11-26 IST
 
 - Desktop capture now uses AudioWorklet 20 ms PCM16 packets at 24 kHz mono, separate PC/MIC realtime connections, `gpt-live-transcribe`, Aster's RMS .005 threshold, 300 ms preroll, 700 ms silence commits and 18-second turn limit. No MediaRecorder or four-second file gate is used by the desktop realtime path. Browser file transcription remains separately labeled.

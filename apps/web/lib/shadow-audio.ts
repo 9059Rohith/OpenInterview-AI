@@ -19,7 +19,7 @@ export interface ShadowAudioEnvironment {
 }
 export interface ShadowAudioOptions {
   transcribe: (blob: Blob, source: ShadowAudioSource, signal: AbortSignal) => Promise<string>;
-  onTranscript: (text: string, source: ShadowAudioSource) => void;
+  onTranscript: (text: string, source: ShadowAudioSource, itemId?: string) => void;
   onLevels?: (levels: ShadowAudioLevels, voice: Record<ShadowAudioSource, boolean>) => void;
   onStatus?: (status: ShadowAudioStatus, pending: number) => void;
   onError?: (error: Error) => void;

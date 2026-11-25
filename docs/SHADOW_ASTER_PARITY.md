@@ -1,5 +1,7 @@
 # Shadow and Aster verification
 
+The 0.4 update enables automatic completed-PC-question answers with a 180 ms queue delay, bounded backlog, distinct-turn deduplication and short follow-ups. Answer context combines the current resume, relevant project-source passages, the current conversation and retrieved earlier responses. AI suggestions remain labeled as unverified conversation memory. Private source libraries live in encrypted SQLite shards rather than in public assets or the editable workspace record. Auto/context/memory preferences persist; recording and provider-processing controls remain visible and no audio starts on launch. See VALIDATION.md for full real-provider and installed-data checks.
+
 Version 0.2.0 follows the subsequent request for Aster-style desktop Shadow controls. The original MASTER_SPEC.md is retained as historical input; the later request adds native overlay capture exclusion.
 
 The Windows overlay uses a frameless transparent window, 930×790 default logical size, 560×440 minimum, independent 70% background transparency and fully opaque text. It supports drag, eight resize grips, scroll/page controls, answer/transcript tabs, answer history, copy/stop, local session memory and resume/document context, notes, explicit screen selection, compact mode, configurable topmost and encrypted settings. Normal close and Quit await final audio processing and workspace flush. Light reloads the encrypted workspace when Shadow closes; its suspended renderer cannot overwrite Shadow changes.

@@ -31,7 +31,7 @@ export interface ShadowRealtimeEnvironment {
 }
 export interface ShadowRealtimeAudioOptions {
   bridge: ShadowRealtimeBridge;
-  onTranscript(text: string, source: ShadowAudioSource): void;
+  onTranscript(text: string, source: ShadowAudioSource, itemId?: string): void;
   /** Accumulated draft text, not a delta; cleared after the corresponding final. */
   onPartial?(text: string, source: ShadowAudioSource): void;
   onLevels?(levels: ShadowAudioLevels, voice: Record<ShadowAudioSource, boolean>): void;
@@ -273,7 +273,7 @@ export class ShadowRealtimeAudioCapture {
       if (input.finals.size > 512) input.finals.delete(input.finals.values().next().value!);
       input.partials.delete(item);
       const text = event.text?.trim();
-      if (text) this.options.onTranscript(text, input.source);
+      if (text) this.options.onTranscript(text, input.source, event.itemId);
       this.options.onPartial?.([...input.partials.values()].filter(Boolean).join(' '), input.source);
     }
     this.options.onSpeechEvent?.(event);

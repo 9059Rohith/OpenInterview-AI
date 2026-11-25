@@ -10,6 +10,7 @@ import { audioInput,transcribeAudio } from './speech.js';
 import { RealtimeSpeechSession } from './realtime-speech.js';
 import { visionInput,visionRequest } from './vision.js';
 import { LocalStore } from './store.js';
+import { PrivateKnowledge } from './knowledge.js';
 import { ShadowWindow } from './shadow-window.js';
 import { assetPath,trustedNavigation,externalLink,inlineScriptHashes,object,string,provider,model,requestId,MAX_FILE,safeName } from './security.js';
 import { generate,generateStreaming,listProviderModels,ollamaStatus,ollamaJson,ollamaPull,ORIGINS } from './providers.js';
@@ -33,6 +34,7 @@ const webRoot=app.isPackaged?path.join(process.resourcesPath,'web'):path.resolve
 const requests=new Map<string,{controller:AbortController;owner:BrowserWindow}>();
 const speechSessions=new Map<string,{session:RealtimeSpeechSession;owner:BrowserWindow;source:'PC'|'MIC'}>();
 let mainWindow:BrowserWindow,vault:Vault,store:LocalStore,shadow:ShadowWindow;
+let projectKnowledge:PrivateKnowledge|undefined;
 const mediaUntil=new Map<BrowserWindow,number>();
 function legitimate(window:BrowserWindow|null|undefined){return !!window&&!window.isDestroyed()&&(window===mainWindow||window===shadow?.window);}
 function cancelOwned(window:BrowserWindow){for(const active of requests.values())if(active.owner===window)active.controller.abort();for(const [id,active]of speechSessions)if(active.owner===window){active.session.cancel();speechSessions.delete(id);}mediaUntil.delete(window);}
@@ -55,6 +57,7 @@ function secureWindow(window:BrowserWindow){
   window.webContents.setWindowOpenHandler(details=>{void openKnownExternal(details.url,window);return {action:'deny'};});window.webContents.on('will-navigate',(event,url)=>{if(isRunner(url)){event.preventDefault();return;}if(!trustedNavigation(url,home)){event.preventDefault();void openKnownExternal(url,window);}});window.webContents.on('will-redirect',(event,url)=>{if(isRunner(url)||!trustedNavigation(url,home))event.preventDefault();});window.webContents.on('will-attach-webview',event=>event.preventDefault());window.webContents.on('destroyed',()=>cancelOwned(window));
 }
 function handlers(){
+  handle('retrieveKnowledge',raw=>{const data=object(raw);projectKnowledge??=new PrivateKnowledge(store);return projectKnowledge.query(string(data.query,4000),data.limit===undefined?6:Number(data.limit));});
   const speechOwned=(raw:unknown,owner:BrowserWindow)=>{const data=object(raw),id=requestId(data.requestId),active=speechSessions.get(id);if(!active||active.owner!==owner)throw new Error('No realtime speech session owned by this window');return {data,id,active};};
   handle('speechStart',async(raw,owner)=>{
     const data=object(raw),id=requestId(data.requestId),source=data.source;
