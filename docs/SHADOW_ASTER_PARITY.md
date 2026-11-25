@@ -12,6 +12,8 @@ Shortcuts: Ctrl+Alt+Space show/hide and recover mouse interaction; Ctrl+Alt+C cl
 
 On the tested Windows machine, the 1920×1200 stream contained the marker with protection off (ratio 1.0), contained the underlying blue background with protection on (marker 0.0, blue 1.0), and contained the marker again when protection was disabled (1.0). Protection is restored afterwards. These positive controls rule out a blank video or an accidentally obscured overlay.
 
+The identical test also passed after installing 0.2.0, against the packaged installed executable through the normal Light→Shadow handoff. Set `OPENINTERVIEW_INSTALLED_EXE` to the installed executable for this variant. The test restores original window bounds and never exports workspace contents; its scalar report is `.local/screen-share-installed-result.json`.
+
 This verifies the tested Windows WebRTC monitor-capture path. It does not verify Zoom, Teams, Meet, OBS, every custom interview portal, every monitor, remote desktops or external cameras. Electron's Windows content-protection API requests WDA_EXCLUDEFROMCAPTURE; the runtime UI says **requested**, not guaranteed. Browser Shadow cannot provide native capture exclusion. Microsoft explicitly does not present display affinity as guaranteed security protection.
 
 Sources: [Electron BrowserWindow](https://www.electronjs.org/docs/latest/api/browser-window#setcontentprotectionenable), [Microsoft SetWindowDisplayAffinity](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowdisplayaffinity).

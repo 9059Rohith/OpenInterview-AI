@@ -9,11 +9,15 @@ import assert from 'node:assert/strict';
 const root=process.cwd();
 const profile=await mkdtemp(path.join(os.tmpdir(),'oi-share-test-'));
 await writeFile(path.join(profile,'receiver.html'),'<!doctype html><button id="start">Start synthetic capture</button><video muted autoplay></video><canvas></canvas>');
-const app=await electron.launch({executablePath:path.join(root,'node_modules/electron/dist/electron.exe'),args:[path.join(root,'apps/desktop'),'--shadow-fixture'],env:{...process.env,OPENINTERVIEW_TEST_PROFILE:profile},timeout:45000});
+const installed=process.env.OPENINTERVIEW_INSTALLED_EXE;
+const app=await electron.launch({executablePath:installed||path.join(root,'node_modules/electron/dist/electron.exe'),args:installed?[]:[path.join(root,'apps/desktop'),'--shadow-fixture'],env:{...process.env,OPENINTERVIEW_TEST_PROFILE:profile},timeout:45000});
+let originalBounds;
 try{
+ if(installed){const main=await app.firstWindow();await main.getByRole('heading',{name:'Make your next interview your best one.'}).waitFor();await main.evaluate(()=>{window.location.hash='shadow';});}
  await app.waitForEvent('window',{predicate:page=>page.url().includes('desktopShadow=1'),timeout:30000}).catch(()=>{});
  const shadow=app.windows().find(page=>page.url().includes('desktopShadow=1'));
  assert(shadow,'Actual Shadow renderer opened');await shadow.waitForLoadState();
+ originalBounds=await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().includes('desktopShadow=1')).getBounds());
  await app.evaluate(async({BrowserWindow,screen,session,desktopCapturer},profile)=>{
   const display=screen.getPrimaryDisplay();
   const overlay=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().includes('desktopShadow=1'));
@@ -57,10 +61,10 @@ try{
  }
  const unprotected=await sample(false),protectedFrame=await sample(true),restored=await sample(false);
  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().includes('desktopShadow=1')).setContentProtection(true));
- const report={time:new Date().toISOString(),platform:process.platform,method:'WebRTC getDisplayMedia primary full-screen A-B-A synthetic fixture',unprotected,protectedFrame,restored};
- await mkdir(path.join(root,'.local'),{recursive:true});await writeFile(path.join(root,'.local/screen-share-result.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+ const report={time:new Date().toISOString(),platform:process.platform,installedBuild:!!installed,method:'WebRTC getDisplayMedia primary full-screen A-B-A synthetic fixture',unprotected,protectedFrame,restored};
+ await mkdir(path.join(root,'.local'),{recursive:true});await writeFile(path.join(root,installed?'.local/screen-share-installed-result.json':'.local/screen-share-result.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  assert(unprotected.magenta>.98,'Unprotected overlay must appear in full-screen stream');
  assert(protectedFrame.blue>.98&&protectedFrame.magenta<.01,'Protected overlay must be excluded and underlying desktop visible');
  assert(restored.magenta>.98,'Disabling protection must restore marker in same stream');
  console.log('PASS: actual Shadow excluded from full-screen video capture, with positive controls');
-}finally{await app.close();}
+}finally{if(originalBounds)await app.evaluate(({BrowserWindow},bounds)=>{const window=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().includes('desktopShadow=1'));if(window){window.setContentProtection(true);window.setBounds(bounds);}},originalBounds).catch(()=>{});await app.close();}
