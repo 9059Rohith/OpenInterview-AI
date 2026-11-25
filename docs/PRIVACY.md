@@ -8,4 +8,4 @@ Cloud account storage is optional. Upload or sync only after choosing to use the
 
 Operational logs should contain request metadata and sanitized error categories, not raw resumes, keys or transcripts. Operators are responsible for retention, deletion requests, backups and their hosting provider's access logs. Guest data controls and export/delete actions are separate from cloud account deletion.
 
-No private candidate data or personal API key is bundled into the public example dataset. The application is intended for preparation and permitted assistance; it does not implement covert recording or screen-sharing evasion.
+No private candidate data or personal API key is bundled into the public example dataset. The application is intended for preparation and permitted assistance; it does not implement covert recording. Windows desktop Shadow requests operating-system capture exclusion for its overlay; browser Shadow remains visible in shared screens. This is best effort and must be checked with the sharing application.

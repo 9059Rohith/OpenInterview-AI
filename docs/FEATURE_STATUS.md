@@ -20,7 +20,7 @@ This file tracks verification rather than marketing claims. The core application
 | Observability | Sanitized local/API metrics | Not represented as an installed external LogLens service |
 | Desktop | Sandboxed Windows build | Signing, Mac/Linux builds need external platform setup |
 
-No hidden recording, screen-sharing evasion, process disguise or monitoring bypass is implemented. The original question catalog is educational material, not a claim of verified employer interview reports. See API.md for backend-specific advanced features that remain outside the verified release, and VALIDATION.md for exact test and deployment results.
+Windows desktop Shadow now includes an Aster-style translucent native overlay and operating-system capture-exclusion request. Actual WebRTC full-screen capture passed an on/off/on differential test on the development Windows machine; other sharing applications and monitors require separate checks. Browser Shadow remains visible. No hidden recording or process disguise is implemented. See SHADOW_ASTER_PARITY.md for differences and evidence. The original question catalog is educational material, not a claim of verified employer interview reports. See API.md for backend-specific advanced features that remain outside the verified release, and VALIDATION.md for exact test and deployment results.
 
 AI evaluation is guidance, not objective proof of skill. No two-hour reliability claim is made without a two-hour soak test.
 

@@ -1,4 +1,4 @@
-OpenInterview AI 0.1.0 is an initial community release with a Next.js static web workspace, sandboxed Electron desktop client and optional FastAPI account service.
+OpenInterview AI 0.2.0 adds Aster-style desktop Shadow: a translucent, resizable native window with readable opaque answers, separate PC/MIC transcription, compact mode, tray/keyboard recovery, session memory and coordinated close/save. Windows capture exclusion passed an actual synthetic full-monitor WebRTC on/off/on test. Compatibility with other capture applications is not guaranteed. See SHADOW_ASTER_PARITY.md for exact tests and differences from Aster.
 
 Includes Light Mode and visible Shadow Mode; local profiles/resume versions; PDF/DOCX import/export; document retrieval; user-selected image text extraction/explanation; original practice questions; mock interviews and transparent rubrics; coding sandbox and Mermaid design practice; study plans/flashcards/reports; persistent notes and mentor conversation memory; direct personal provider keys; OS-protected desktop credentials and encrypted SQLite; visible consented audio transcription; optional cloud/auth/billing/headshot adapters.
 

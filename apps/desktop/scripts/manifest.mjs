@@ -4,7 +4,7 @@ const version=JSON.parse(await readFile(new URL('../package.json',import.meta.ur
 const directory=new URL('../release/',import.meta.url);
 const artifacts=[];
 for(const name of await readdir(directory)){
-  if(!/\.(exe|dmg|AppImage|deb)$/.test(name))continue;
+  if(!name.startsWith('OpenInterview-AI-'+version+'-')||!/\.(exe|dmg|AppImage|deb)$/.test(name))continue;
   const file=new URL(name,directory),metadata=await stat(file);
   if(!metadata.isFile())continue;
   const sha256=createHash('sha256').update(await readFile(file)).digest('hex');

@@ -11,7 +11,7 @@ Reviewed 2026-11-25. This is a comparison of public descriptions, not an indepen
 | Spoken mock interviews | Question/answer/evaluation practice with visible voice controls |
 | Resume maker | Editable versioned resume content and PDF/DOCX export |
 | Photo headshots | Optional provider-dependent operation; never a fake generated image |
-| Screen-sharing/process concealment claims | Excluded by the OpenInterview master specification |
+| Windows overlay capture exclusion | Added by subsequent Aster-parity request; native OS request and synthetic full-screen verification; no universal concealment claim or process disguise |
 
 The [ParakeetAI homepage](https://www.parakeet-ai.com/) describes these categories. Its promotional accuracy, popularity and invisibility claims have not been independently validated and are not copied into this product. The [official mock-interview page](https://www.parakeet-ai.com/mock-interview) describes spoken questions, answers, follow-ups and saved transcripts. We use our own educational content and UI; we do not reproduce private question banks, branding, testimonials or client code.
 

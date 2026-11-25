@@ -1,7 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron';
 const invoke=(name:string,payload?:unknown)=>ipcRenderer.invoke('oi:'+name,payload);
 contextBridge.exposeInMainWorld('openInterviewDesktop',Object.freeze({
-  platform:process.platform,version:'0.1.0',
+  platform:process.platform,version:'0.2.0',
+  getShadowState:()=>invoke('getShadowState'),openShadow:()=>invoke('openShadow'),updateShadow:(value:unknown)=>invoke('updateShadow',value),resizeShadow:(value:unknown)=>invoke('resizeShadow',value),hideShadow:()=>invoke('hideShadow'),closeShadow:()=>invoke('closeShadow'),
   getCapabilities:()=>invoke('capabilities'),vaultStatus:()=>invoke('vaultStatus'),
   setCredential:(provider:string,key:string)=>invoke('setCredential',{provider,key}),removeCredential:(provider:string)=>invoke('removeCredential',{provider}),
   providerRequest:(value:unknown)=>invoke('providerRequest',value),providerModels:(value:unknown)=>invoke('providerModels',value),transcribeAudio:(value:unknown)=>invoke('transcribeAudio',value),visionRequest:(value:unknown)=>invoke('visionRequest',value),cancelRequest:(value:unknown)=>invoke('cancelRequest',value),

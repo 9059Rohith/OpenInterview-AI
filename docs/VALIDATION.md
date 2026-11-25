@@ -1,5 +1,14 @@
 # Validation record — 2026-11-25
 
+## Shadow 0.2.0 follow-up — 2026-11-26 IST
+
+- Frozen production build and both TypeScript workspaces pass. Web 44/44 and desktop 30/30 tests pass. All 15 Chromium browser workflows pass together in 59 seconds, including five new Shadow parity workflows and the original ten workflows.
+- Actual Windows full-monitor WebRTC capture differential passes on the final source: 1920×1200, marker ratios unprotected 1.0 / protected 0.0 / unprotected again 1.0; underlying synthetic desktop ratio 1.0 with protection. This tests real capture output, not only the requested flag. See SHADOW_ASTER_PARITY.md and `tests/desktop/screen-share.mjs`.
+- Real Chromium MediaRecorder/AudioContext synthetic PC/MIC files decode independently; audio-only recorder tracks, immediate capture release and no late uploads pass (`tests/desktop/audio-codec.mjs`).
+- Actual sandboxed Electron + installed local Ollama streams a nonempty answer; Stop saves its partial response. Native close preserves the latest typed notes and completed session in encrypted SQLite, reloads Light, reopens Shadow from Light, and completes the coordinated Quit handshake (`tests/desktop/shadow-integration.mjs`). Uses an isolated profile and synthetic candidate data.
+- Native smoke additionally verifies 10 shortcuts, mouse interaction recovery, all resize directions, DPI bounds stability, topmost, settings persistence and same-origin impostor IPC rejection. Small 560×440 and 390px layouts have no observed horizontal overflow or notes/form overlap.
+- These checks do not constitute every meeting portal, all displays, actual private microphone testing, a two-hour soak or universal screen-capture invisibility. Aster realtime PCM/WASAPI and this implementation's four-second complete-file transcription differ.
+
 ## Verified implementation
 
 | Check | Observed result |
