@@ -51,8 +51,12 @@ def main():
     try: release = request('/repos/' + repo + '/releases/tags/' + args.tag)
     except urllib.error.HTTPError as error:
         if error.code != 404: raise
-        notes = (ROOT / 'docs' / 'RELEASE_NOTES.md').read_text(encoding='utf-8')
-        release = request('/repos/'+repo+'/releases', 'POST', {'tag_name': args.tag, 'name': 'OpenInterview AI '+args.tag, 'body': notes, 'draft': args.draft, 'prerelease': False})
+        # GitHub's by-tag endpoint may omit unpublished drafts. Reuse the owner's
+        # draft instead of accidentally creating a second release for the tag.
+        release = next((item for item in request('/repos/'+repo+'/releases?per_page=100') if item['tag_name'] == args.tag), None)
+        if release is None:
+            notes = (ROOT / 'docs' / 'RELEASE_NOTES.md').read_text(encoding='utf-8')
+            release = request('/repos/'+repo+'/releases', 'POST', {'tag_name': args.tag, 'name': 'OpenInterview AI '+args.tag, 'body': notes, 'draft': args.draft, 'prerelease': False})
     if args.action == 'publish':
         release = request('/repos/'+repo+'/releases/'+str(release['id']), 'PATCH', {'draft': False})
     if args.action == 'upload':
