@@ -5,7 +5,7 @@ from fastapi import Request
 
 
 def make_engine(url):
-    options = {'pool_pre_ping': True}
+    options = {'pool_pre_ping': True, 'hide_parameters': True}
     if url.startswith('sqlite'):
         options['connect_args'] = {'check_same_thread': False, 'timeout': 30}
         if ':memory:' in url: options['poolclass'] = StaticPool

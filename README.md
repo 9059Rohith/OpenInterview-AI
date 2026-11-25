@@ -8,7 +8,7 @@ An open-source interview preparation workspace with a local-first Next.js web ap
 
 ## Run the web app
 
-Requirements: Node.js 22.12 or later and npm 10 or later.
+Requirements: Node.js 24 or later and npm 10 or later.
 
 ```powershell
 npm ci
