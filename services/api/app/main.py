@@ -650,7 +650,10 @@ def create_app(settings=None, engine=None, provider=None, billing=None):
         evaluation = evaluate_answer(data.text, question.expected_concepts)
         db.add(m.Turn(owner_id=user.id, session_id=record.id, speaker='user', text=data.text, evaluation=evaluation))
         db.add(m.Progress(owner_id=user.id, topic=question.topic, score=evaluation['score'], evidence={'sessionId': record.id, 'method': evaluation['method']}))
-        mock.cursor += 1
+        expected_cursor = mock.cursor
+        advanced = db.execute(update(m.MockInterview).where(m.MockInterview.id == mock.id, m.MockInterview.owner_id == user.id, m.MockInterview.cursor == expected_cursor).values(cursor=m.MockInterview.cursor + 1))
+        if advanced.rowcount != 1: raise HTTPException(409, 'This question was already answered; refresh the interview before continuing')
+        db.refresh(mock)
         next_question = None
         if mock.cursor < len(mock.question_ids):
             next_question = accessible_question(db, mock.question_ids[mock.cursor], user.id).question
@@ -751,7 +754,8 @@ def create_app(settings=None, engine=None, provider=None, billing=None):
         if len(data) > 10 * 1024 * 1024: raise HTTPException(413, 'Audio exceeds 10 MiB; send a shorter segment')
         app.state.providers.ensure('openai')
         quota(db, user, 'transcribe')
-        return await app.state.providers.transcribe('segment.' + ('webm' if 'webm' in file.content_type else 'wav'), data, file.content_type)
+        extension = {'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/mpeg': 'mp3', 'audio/mp3': 'mp3', 'audio/webm': 'webm', 'video/webm': 'webm', 'audio/ogg': 'ogg', 'audio/mp4': 'm4a'}[file.content_type]
+        return await app.state.providers.transcribe('segment.' + extension, data, file.content_type)
 
     @router.get('/billing/plans')
     def billing_plans(): return {'plans': plans(), 'amountUnit': 'minor currency units', 'interval': 'month', 'note': 'Local AI and direct BYOK do not consume server inference. Paid server inference has bounded monthly quotas and requires provider configuration.'}
@@ -805,7 +809,7 @@ def create_app(settings=None, engine=None, provider=None, billing=None):
             if not isinstance(wrapper, dict) or not isinstance(wrapper.get('entity', {}), dict): raise HTTPException(400, 'Invalid webhook entity')
             return wrapper.get('entity', {})
         entity, payment = webhook_entity('subscription'), webhook_entity('payment')
-        sub = db.scalar(select(m.Subscription).where(m.Subscription.provider_id == entity.get('id', '')))
+        sub = db.scalar(select(m.Subscription).where(m.Subscription.provider_id == entity.get('id', '')).with_for_update())
         try:
             event_at = int(payload.get('created_at', 0))
             if event_at < 0 or event_at > int(time.time()) + 300: raise ValueError()

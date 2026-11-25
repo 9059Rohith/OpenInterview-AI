@@ -355,3 +355,21 @@ def test_nested_byok_and_credential_headers_rejected(authenticated):
     response = authenticated.get(API + '/auth/me', headers={'authorization': 'Bearer NEVER-STORED-SECRET'})
     assert response.status_code == 422
     assert 'NEVER-STORED-SECRET' not in response.text
+
+
+def test_duplicate_concurrent_mock_answers_are_not_double_recorded(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    from app.main import create_app
+    from app.config import Settings
+    from app.database import make_engine
+    app = create_app(Settings(mode='local'), engine=make_engine('sqlite:///' + str(tmp_path / 'concurrency.db')))
+    with TestClient(app) as client:
+        signup(client)
+        mock = client.post(API + '/mock-interviews', json={'title': 'Concurrent original fixture', 'category': 'Python'}).json()
+        path = API + '/mock-interviews/' + mock['id'] + '/answer'
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [pool.submit(client.post, path, json={'text': 'Use None to avoid shared mutable defaults.'}) for _ in range(2)]
+            statuses = sorted(f.result().status_code for f in futures)
+        assert statuses == [200, 409]
+        assert client.get(API + '/reports').json()['practiceAnswers'] == 1
+        assert len(client.get(API + '/sessions/' + mock['session']['id']).json()['turns']) == 2

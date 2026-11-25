@@ -4,7 +4,7 @@ contextBridge.exposeInMainWorld('openInterviewDesktop',Object.freeze({
   platform:process.platform,version:'0.1.0',
   getCapabilities:()=>invoke('capabilities'),vaultStatus:()=>invoke('vaultStatus'),
   setCredential:(provider:string,key:string)=>invoke('setCredential',{provider,key}),removeCredential:(provider:string)=>invoke('removeCredential',{provider}),
-  providerRequest:(value:unknown)=>invoke('providerRequest',value),providerModels:(value:unknown)=>invoke('providerModels',value),transcribeAudio:(value:unknown)=>invoke('transcribeAudio',value),cancelRequest:(value:unknown)=>invoke('cancelRequest',value),
+  providerRequest:(value:unknown)=>invoke('providerRequest',value),providerModels:(value:unknown)=>invoke('providerModels',value),transcribeAudio:(value:unknown)=>invoke('transcribeAudio',value),visionRequest:(value:unknown)=>invoke('visionRequest',value),cancelRequest:(value:unknown)=>invoke('cancelRequest',value),
   ollamaStatus:()=>invoke('ollamaStatus'),ollamaModels:()=>invoke('ollamaModels'),ollamaPull:(value:unknown)=>invoke('ollamaPull',value),ollamaRemove:(value:unknown)=>invoke('ollamaRemove',value),ollamaGenerate:(value:unknown)=>invoke('ollamaGenerate',value),ollamaControl:(value:unknown)=>invoke('ollamaControl',value),
   chooseFile:(value:unknown)=>invoke('chooseFile',value),exportFile:(value:unknown)=>invoke('exportFile',value),getApiStatus:()=>invoke('apiStatus'),
   requestMediaAccess:()=>invoke('requestMediaAccess'),storeGet:(value:unknown)=>invoke('storeGet',value),storePut:(value:unknown)=>invoke('storePut',value),storeDelete:(value:unknown)=>invoke('storeDelete',value),

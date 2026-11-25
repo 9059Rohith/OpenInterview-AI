@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import { compatibleBase,generate,providerPlan,checkedJson } from '../src/providers.js';
+import { compatibleBase,generate,providerPlan,checkedJson,safeUsage } from '../src/providers.js';
 import {generation} from '../src/security.js';
 const input={provider:'openai',model:'gpt-4.1-mini',requestId:'test-request',messages:[{role:'user',content:'Explain a queue'}]};
 test('provider request destinations are fixed, keys remain in headers',()=>{
@@ -24,3 +24,4 @@ test('cancellation is passed to fetch and prevents response generation',async()=
 test('all supported adapters normalize their response',async()=>{
   for(const [provider,result]of [['gemini',{candidates:[{content:{parts:[{text:'Gemini ready'}]}}]}],['claude',{content:[{type:'text',text:'Claude ready'}]}],['ollama',{message:{content:'Ollama ready'}}]] as const){const response=await generate({...input,provider},()=> 'synthetic',new AbortController().signal,undefined,(async()=>new Response(JSON.stringify(result),{status:200}))as typeof fetch);assert.match(response.text,/ready$/);}
 });
+test('usage metadata returns only finite token counts, never arbitrary provider fields',()=>{assert.deepEqual(safeUsage({total_tokens:54,secret:'synthetic-must-not-leak',input_tokens:-1,output_tokens:Infinity}),{total_tokens:54});});

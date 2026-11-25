@@ -15,7 +15,8 @@ def tokens(text): return max(1, (len(text.encode('utf-8')) + 2) // 3)
 
 
 def analyze_resume(text, job=''):
-    skills = [s for s in SKILLS if re.search(r'(?<!\w)' + re.escape(s) + r'(?!\w)', text, re.I)]
+    def mentioned(skill, value): return re.search(r'(?<![\w+#])' + re.escape(skill) + r'(?![\w+#])', value, re.I)
+    skills = [s for s in SKILLS if mentioned(s, text)]
     lines = [x.strip() for x in text.splitlines() if x.strip()]
     sections = {}
     current = None
@@ -28,7 +29,7 @@ def analyze_resume(text, job=''):
     bullets = [line for line in lines if re.match(r'^[-•*]', line)]
     metrics = [line for line in bullets if re.search(r'\d', line)]
     checks = {'hasEducationSection': 'education' in sections, 'hasExperienceSection': any('experience' in k for k in sections), 'hasProjectSection': any('project' in k for k in sections), 'hasSkills': bool(skills), 'hasMeasurableBullet': bool(metrics)}
-    jd_skills = [s for s in SKILLS if re.search(r'(?<!\w)' + re.escape(s) + r'(?!\w)', job, re.I)]
+    jd_skills = [s for s in SKILLS if mentioned(s, job)]
     matched = [s for s in jd_skills if s in skills]
     missing = [s for s in jd_skills if s not in skills]
     return {'method': 'deterministic text checklist and explicit skill matching; not an ATS prediction', 'aiGenerated': False, 'skills': skills, 'sections': sections, 'bullets': bullets, 'score': sum(checks.values()) * 20, 'criteria': checks, 'suggestions': [f'Add or clarify {k.removeprefix("has").removesuffix("Section")}' for k, v in checks.items() if not v], 'match': {'score': round(100 * len(matched) / len(jd_skills)) if jd_skills else None, 'matchedSkills': matched, 'missingSkills': missing, 'requiredSkills': jd_skills}, 'bulletGuidance': 'Use action + specific contribution + evidence. Add only numbers and outcomes you can substantiate.'}

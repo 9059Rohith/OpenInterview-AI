@@ -13,3 +13,13 @@ The [official small Qwen2.5 model](https://ollama.com/library/qwen2.5:0.5b) is a
 Keep the service on loopback (`127.0.0.1:11434`). Do not expose an unauthenticated model service to a network. If browser access is necessary, allow only the specific trusted website origin using `OLLAMA_ORIGINS`; do not use a wildcard. Set `OLLAMA_NO_CLOUD=true` when requiring local-only operation.
 
 This Windows environment initially had no Ollama installation. For validation, CPU runtime files were extracted from the official v0.40.18 release ZIP, checked against each ZIP entry CRC, and the executable's Authenticode signature was verified as valid for Ollama Inc. The full GPU archive was not installed. Models and runtime diagnostics are outside the source repository. See VALIDATION.md for the actual inference result.
+
+For this specific verified CPU installation, restart the service with the existing downloaded model directory if Windows has restarted:
+
+```powershell
+$env:OLLAMA_MODELS = Join-Path $env:LOCALAPPDATA 'OpenInterviewAI-runtime\models'
+$env:OLLAMA_NO_CLOUD = 'true'
+& "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe" serve
+```
+
+The desktop app does not bundle GPU drivers or automatically download model weights. Runtime availability is checked independently from the existence of a configuration or API key.

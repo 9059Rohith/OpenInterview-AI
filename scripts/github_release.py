@@ -50,7 +50,7 @@ def main():
     except urllib.error.HTTPError as error:
         if error.code != 404: raise
         notes = (ROOT / 'docs' / 'RELEASE_NOTES.md').read_text(encoding='utf-8')
-        release = request('/repos/'+repo+'/releases', 'POST', {'tag_name': args.tag, 'name': 'OpenInterview AI '+args.tag, 'body': notes, 'draft': False, 'prerelease': True})
+        release = request('/repos/'+repo+'/releases', 'POST', {'tag_name': args.tag, 'name': 'OpenInterview AI '+args.tag+' — initial community release', 'body': notes, 'draft': False, 'prerelease': False})
     if args.action == 'upload':
         path = pathlib.Path(args.file).resolve()
         existing = next((a for a in release['assets'] if a['name'] == path.name), None)

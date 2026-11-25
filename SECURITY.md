@@ -6,4 +6,4 @@ The desktop renderer is sandboxed and context isolated. Only validated, named IP
 
 User content is untrusted. Uploaded files need size/type limits, retrieved content is data rather than system instructions, and generated code must run in a constrained sandbox. Never execute user code in the API process. Outbound provider/compatible endpoints require validation. See docs/THREAT_MODEL.md for trust boundaries and limits.
 
-Production operators must supply TLS, persistent PostgreSQL, a strong application secret, restricted CORS, provider/payment credentials when needed, backups and monitoring. Run dependency scans before each public release. This initial release has not received an independent security audit or code-signing certificate.
+Production operators must supply TLS, persistent PostgreSQL, secure cookies, restricted CORS, provider/payment credentials when needed, backups and monitoring. Run dependency scans before each public release. This initial release has not received an independent security audit or code-signing certificate.

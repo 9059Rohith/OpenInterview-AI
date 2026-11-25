@@ -2,6 +2,8 @@
 
 An open-source interview preparation workspace with a local-first Next.js web app, an Electron desktop client and an optional FastAPI account service.
 
+[Open the live workspace](https://openinterview-ai.vercel.app/workspace/) · [Desktop downloads](https://github.com/9059Rohith/OpenInterview-AI/releases) · [Validation and limitations](docs/VALIDATION.md)
+
 **Light Mode** supports learning and practice. **Shadow Mode** supports visible, user-initiated transcription and assistance in permitted conversations. Recording and cloud processing always require user action. AI responses are fallible; this product does not guarantee hiring outcomes.
 
 ## Run the web app
@@ -24,7 +26,7 @@ npm run test:e2e
 
 ## Run the account API
 
-Use Python 3.11 or later. Copy `.env.example` to a private local environment file, set a strong `APP_SECRET`, and configure the database. See [API setup](docs/API.md) for supported variables and endpoints.
+Use Python 3.11 or later. Copy `.env.example` to a private local environment file, configure the database, cookie security and allowed origins in the process environment. Example environment files are not loaded automatically. See [API setup](docs/API.md) for supported variables and endpoints.
 
 ```powershell
 cd services/api
@@ -38,7 +40,7 @@ SQLite is suitable for local use. Production account storage requires persistent
 
 ## Desktop
 
-Build the web export first, then `npm run build:desktop` and `npm run desktop`. `npm run dist:win` builds Windows NSIS and portable artifacts. See [desktop documentation](apps/desktop/README.md). macOS and Linux scripts require those hosts; availability is reported only after an artifact has been built. Community Windows builds are unsigned.
+Build the web export first, then `npm run build:desktop` and `npm run desktop`. `npm run dist:win` builds Windows NSIS and portable artifacts. See [desktop documentation](apps/desktop/docs/DESKTOP.md). macOS and Linux scripts require those hosts; availability is reported only after an artifact has been built. Community Windows builds are unsigned.
 
 ## Layout
 
@@ -51,3 +53,5 @@ Build the web export first, then `npm run build:desktop` and `npm run desktop`. 
 | `infrastructure` | Local PostgreSQL/API deployment support |
 
 Read [feature status](docs/FEATURE_STATUS.md), [deployment](docs/DEPLOYMENT.md), [security](SECURITY.md), [privacy](docs/PRIVACY.md) and [contributing](CONTRIBUTING.md) before hosting a shared service. MIT licensed.
+
+GitHub Actions definitions are supplied in `.github/workflow-templates/*.yml.example`. The publishing credential cannot activate workflows; a repository owner can copy them to `.github/workflows/` with the `.yml` extension. Local checks run independently of that account permission.

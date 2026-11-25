@@ -4,7 +4,7 @@ import {Download,Mic,Send,Square} from 'lucide-react';
 import {useStore} from '@/lib/store';
 import {now,uid,sessionMarkdown} from '@/lib/core';
 import {download} from '@/lib/files';
-import {transcribeAudio} from '@/lib/providers';
+import {transcribeAudio,hasKey} from '@/lib/providers';
 import type {Session,SpeechRecognitionLike} from '@/lib/types';
 import {Assistant} from './assistant';
 import {Button,Empty,Field,Heading,Notice,Tags} from './ui';
@@ -16,6 +16,7 @@ export function ShadowPage(){
  function ensureSession(){if(id)return id;const created:Session={id:uid(),title:'Conversation notes',mode:'Shadow Mode',category:'Conversation',company:'Any company',role:state.profile.role,difficulty:'Intermediate',status:'active',createdAt:now(),updatedAt:now(),turns:[],notes:'',archived:false,questionIds:[],duration:60};setState(s=>({...s,sessions:[created,...s.sessions]}));setId(created.id);sessionRef.current=created.id;return created.id;}
  function stop(){activeRef.current=false;recognition.current?.stop();if(recorder.current?.state==='recording')recorder.current.stop();stream.current?.getTracks().forEach(t=>t.stop());controller.current?.abort();if(chunkTimer.current)clearTimeout(chunkTimer.current);if(vadTimer.current)clearInterval(vadTimer.current);void audioContext.current?.close().catch(()=>{});audioContext.current=null;setActive(false);setProcessing(false);setSpeech(false);setInterim('');}
  async function startCloud(sid:string){
+  if(window.openInterviewDesktop){const vault=await window.openInterviewDesktop.vaultStatus();if(!Array.isArray(vault.configured)||!vault.configured.includes('openai'))throw Error('Connect an OpenAI credential in AI providers before starting direct transcription.');}else if(!hasKey('openai'))throw Error('Connect an OpenAI key in AI providers for this browser session before starting direct transcription.');
   const capture=source==='system'?await navigator.mediaDevices.getDisplayMedia({video:true,audio:true}):await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:false});
   if(!capture.getAudioTracks().length){capture.getTracks().forEach(t=>t.stop());throw Error('No audio was shared. Select a tab and enable Share tab audio.');}
   stream.current=capture;const audio=new MediaStream(capture.getAudioTracks());activeRef.current=true;controller.current=new AbortController();const signal=controller.current.signal;

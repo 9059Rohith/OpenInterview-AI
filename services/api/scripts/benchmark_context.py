@@ -13,5 +13,5 @@ for _ in range(50):
     result = optimize('Service 42 latency customer identifier', documents, 1200)
     times.append(result['latencyMs'])
 summary = {key: result[key] for key in ['tokensBefore', 'tokensAfter', 'budget', 'omittedUnits', 'method']}
-summary.update({'runs': 50, 'medianLatencyMs': round(statistics.median(times), 2), 'p95LatencyMs': sorted(times)[47], 'selectedUnitsVerbatim': all(c['text'] in facts for c in result['chunks']), 'selectedUnitsUnique': len({c['text'] for c in result['chunks']}) == len(result['chunks']), 'semanticAnswerQualityEvaluated': False, 'fixture': '400 original synthetic constraint paragraphs, including 200 exact duplicates', 'tokenEstimator': 'ceil UTF-8 bytes / 3, conservative estimate rather than model tokenizer'})
+summary.update({'runs': 50, 'medianLatencyMs': round(statistics.median(times), 2), 'p95LatencyMs': sorted(times)[47], 'selectedUnitsVerbatim': all(c['text'] in facts for c in result['chunks']), 'selectedUnitsUnique': len({c['text'] for c in result['chunks']}) == len(result['chunks']), 'queriedNumericConstraintPreserved': facts[42] in result['text'], 'semanticAnswerQualityEvaluated': False, 'fixture': '400 original synthetic constraint paragraphs, including 200 exact duplicates', 'tokenEstimator': 'ceil UTF-8 bytes / 3, conservative estimate rather than model tokenizer'})
 print(json.dumps(summary, indent=2))

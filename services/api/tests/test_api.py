@@ -246,6 +246,7 @@ def test_context_ranks_exact_numeric_constraint_and_parser_suppresses_private_wa
     from fastapi import HTTPException
     with pytest.raises(HTTPException): extract_document('private.pdf', b'PRIVATE-CANDIDATE-MALFORMED-INPUT')
     assert 'PRIVATE-CANDIDATE-MALFORMED-INPUT' not in caplog.text
+    assert analyze_resume('Skills: C++ and JavaScript')['skills'] == ['JavaScript', 'C++']
 
 
 def test_cloud_without_db_public_only(monkeypatch):

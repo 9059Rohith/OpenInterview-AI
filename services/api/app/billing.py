@@ -93,7 +93,7 @@ class Razorpay:
         if not hmac.compare_digest(expected, signature): raise HTTPException(400, 'Invalid payment signature')
 
     async def verify(self, db, owner, data):
-        sub = db.scalar(select(Subscription).where(Subscription.provider_id == data.razorpay_subscription_id, Subscription.owner_id == owner))
+        sub = db.scalar(select(Subscription).where(Subscription.provider_id == data.razorpay_subscription_id, Subscription.owner_id == owner).with_for_update())
         if not sub: raise HTTPException(404, 'Subscription not found')
         self.signature((data.razorpay_payment_id + '|' + sub.provider_id).encode(), data.razorpay_signature, self.settings.razorpay_secret)
         remote = await self.request('GET', '/subscriptions/' + sub.provider_id)
@@ -109,6 +109,7 @@ class Razorpay:
             raise HTTPException(409, 'Subscription payment invoice is required for verification')
         sub.status = 'active'
         sub.current_end = datetime.fromtimestamp(remote['current_end'], timezone.utc).isoformat()
+        sub.last_event_at = int(datetime.now(timezone.utc).timestamp())
         self.record_payment(db, sub, payment)
         db.commit()
         return {'verified': True, 'plan': sub.plan, 'status': sub.status, 'currentEnd': sub.current_end}

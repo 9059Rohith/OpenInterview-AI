@@ -20,8 +20,9 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql+psycopg://openinterview:${POSTGRES_PASSWORD}@postgres:5432/openinterview
-      APP_ENV: production
-      APP_SECRET: ${APP_SECRET:?Set APP_SECRET in a private environment file}
+      APP_ENV: development
+      APP_MODE: local
+      COOKIE_SECURE: "false"
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     ports:
       - 127.0.0.1:8000:8000
