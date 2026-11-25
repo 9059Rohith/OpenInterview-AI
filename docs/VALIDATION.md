@@ -9,6 +9,7 @@
 - Native smoke additionally verifies 10 shortcuts, mouse interaction recovery, all resize directions, DPI bounds stability, topmost, settings persistence and same-origin impostor IPC rejection. Small 560×440 and 390px layouts have no observed horizontal overflow or notes/form overlap.
 - The 0.2.0 Windows setup completed with exit code 0 and installed product/file version 0.2.0. The same full-monitor capture differential then passed against the **installed packaged executable**, through normal Light→Shadow UI routing, with the same 1.0 / 0.0 / 1.0 marker ratios. Original window bounds were restored afterwards. Set `OPENINTERVIEW_INSTALLED_EXE` to run that test variant; it uses the normal local workspace without exporting its data.
 - These checks do not constitute every meeting portal, all displays, actual private microphone testing, a two-hour soak or universal screen-capture invisibility. Aster realtime PCM/WASAPI and this implementation's four-second complete-file transcription differ.
+- The matching web build reached Vercel READY from commit `082c25b53f22bb31fe7f7033070cc91d6ac068e8`, and all 15 workflows passed again against `https://openinterview-ai.vercel.app` in 2.2 minutes. Source is tagged `v0.2.0`; the Windows setup was uploaded with a GitHub SHA-256 digest matching local `18c318934daf5e54c7b1f5d3acb2f4557fdf3d77f3f8cf4bfb6d7251566f495a`.
 
 ## Verified implementation
 
