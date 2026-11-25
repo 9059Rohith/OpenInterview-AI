@@ -1,4 +1,5 @@
 import {object,string,requestId} from './security.js';
+import {boundedResponseText} from './bounded-response.js';
 const AUDIO_TYPES:Record<string,string>={'audio/webm':'webm','audio/wav':'wav','audio/x-wav':'wav','audio/ogg':'ogg','audio/mp4':'mp4','audio/mpeg':'mp3','audio/flac':'flac'};
 export const MAX_AUDIO_BYTES=10*1024*1024;
 export function audioInput(raw:unknown){
@@ -14,6 +15,6 @@ export async function transcribeAudio(raw:unknown,key:string,signal:AbortSignal,
   const data=audioInput(raw),started=Date.now();const form=new FormData();form.set('file',new Blob([new Uint8Array(data.audio)],{type:data.mime}),'session-audio.'+data.extension);form.set('model','gpt-4o-mini-transcribe');form.set('response_format','json');if(data.language)form.set('language',data.language);
   const response=await fetcher('https://api.openai.com/v1/audio/transcriptions',{method:'POST',headers:{Authorization:'Bearer '+key},body:form,signal,redirect:'error'});
   if(!response.ok){if(response.status===401||response.status===403)throw new Error('OpenAI transcription credentials or permissions rejected');if(response.status===429)throw new Error('OpenAI transcription rate limit or quota reached');throw new Error('Audio transcription failed (HTTP '+response.status+')');}
-  const body=await response.text();if(body.length>1_000_000)throw new Error('Transcription response exceeded size limit');let result:{text?:unknown};try{result=JSON.parse(body);}catch{throw new Error('Transcription returned an invalid JSON response');}if(typeof result.text!=='string')throw new Error('Transcription returned no text');
+  const body=await boundedResponseText(response,1_000_000,'Transcription response exceeded size limit');let result:{text?:unknown};try{result=JSON.parse(body);}catch{throw new Error('Transcription returned an invalid JSON response');}if(typeof result.text!=='string')throw new Error('Transcription returned no text');
   return {text:result.text,provider:'openai',model:'gpt-4o-mini-transcribe',requestId:data.requestId,elapsedMs:Date.now()-started};
 }

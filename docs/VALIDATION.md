@@ -1,5 +1,11 @@
 # Validation record — 2026-11-25
 
+## Security hardening 0.4.1 — 2026-11-26 IST
+
+Production build and TypeScript checks pass. Final unit suites pass: 74 web and 48 desktop tests. Backend full suite passes 63 tests with one opt-in local-inference test skipped. Five focused mock-account/diagram browser flows pass. Regression evidence covers stale session-cookie replay, concurrent one-use token consumption, unsafe OAuth redirects, compatible-key origin changes, realtime ID reuse, streaming response limits and corpus bounds. Historical Git credential-pattern scan checked 291 blobs and found no matches for the scanned key patterns.
+
+Production npm dependencies report zero advisories. Resolved API requirements audit covered 35 Python distributions with no known vulnerabilities. Full npm audit retains six build-tool dependency entries from the minimatch advisory; see SECURITY_REVIEW.md. Google OAuth credentials and a production database remain absent; real Google sign-in has not been activated or tested. The same-origin frontend API proxy and production secure-cookie configuration are prepared.
+
 ## Automatic grounded answers 0.4.0 — 2026-11-26 IST
 
 - Final PC questions enter a bounded FIFO after a 180 ms delay. Questions arriving during generation wait for the current answer; short follow-ups, duplicate turn IDs, repeated questions with distinct IDs, microphone opt-in, cancellation and session changes have dedicated coverage. Auto/context/memory settings persist; recording never starts automatically.

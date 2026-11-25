@@ -6,8 +6,8 @@ import time
 from collections import defaultdict, deque
 from datetime import datetime, timezone, timedelta
 from fastapi import HTTPException, Request
-from sqlalchemy import select, delete
-from .models import Device, User, RateBucket
+from sqlalchemy import select, delete, update
+from .models import Device, User, RateBucket, OAuthState
 
 
 def digest(value): return hashlib.sha256(value.encode()).hexdigest()
@@ -31,7 +31,18 @@ def check_password(password, stored):
         return False
 
 
-def set_session(db, user, response, settings):
+def consume_oauth_state(db, state):
+    # Claim once in the database, even when callbacks hit different workers.
+    verifier = db.execute(delete(OAuthState).where(
+        OAuthState.state_hash == digest(state), OAuthState.expires_at > datetime.now(timezone.utc).isoformat()
+    ).returning(OAuthState.verifier)).scalar_one_or_none()
+    db.commit()
+    return verifier
+
+
+def set_session(db, user, response, settings, previous_token=None):
+    if previous_token:
+        db.execute(update(Device).where(Device.token_hash == digest(previous_token)).values(revoked=True))
     token, csrf = secrets.token_urlsafe(48), secrets.token_urlsafe(32)
     device = Device(owner_id=user.id, token_hash=digest(token), csrf_hash=digest(csrf), expires_at=future(days=settings.session_days))
     db.add(device)

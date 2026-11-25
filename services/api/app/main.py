@@ -20,10 +20,11 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy import select, delete, func, update, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
+from pydantic import TypeAdapter, EmailStr, ValidationError
 from .config import Settings
 from .database import make_engine, migrate, get_db
 from . import models as m, schemas as s
-from .security import identify, hash_password, check_password, set_session, digest, future, RateLimiter, require_consent
+from .security import identify, hash_password, check_password, set_session, consume_oauth_state, digest, future, RateLimiter, require_consent
 from .intelligence import analyze_resume, extract_document, optimize, evaluate_answer, tokens
 from .providers import ProviderGateway
 from .billing import Razorpay, plans, active_subscription
@@ -252,7 +253,7 @@ def create_app(settings=None, engine=None, provider=None, billing=None):
         db.flush()
         db.add(m.Profile(owner_id=user.id, name=user.name))
         db.commit()
-        device = set_session(db, user, response, settings)
+        device = set_session(db, user, response, settings, request.cookies.get('oi_session'))
         return {**user_json(user), 'csrfToken': device.csrf_token}
 
     @router.post('/auth/login')
@@ -262,9 +263,7 @@ def create_app(settings=None, engine=None, provider=None, billing=None):
         user = db.scalar(select(m.User).where(m.User.email == str(data.email).lower()))
         if not check_password(data.password, user.password_hash if user else None): raise HTTPException(401, 'Invalid email or password')
         # Rotate an existing browser session on sign-in.
-        old = request.cookies.get('oi_session')
-        if old: db.execute(update(m.Device).where(m.Device.token_hash == digest(old)).values(revoked=True))
-        device = set_session(db, user, response, settings)
+        device = set_session(db, user, response, settings, request.cookies.get('oi_session'))
         return {**user_json(user), 'csrfToken': device.csrf_token}
 
     @router.get('/auth/me')
@@ -311,6 +310,7 @@ def create_app(settings=None, engine=None, provider=None, billing=None):
     def google_start(request: Request, format: str = '', db: Session = Depends(get_db)):
         ready()
         if not settings.google_id or not settings.google_secret: raise HTTPException(503, 'Google OAuth client credentials are not configured')
+        app.state.limiter.check(('oauth-start', request.client.host if request.client else 'unknown'), 20, 900)
         state, verifier = secrets.token_urlsafe(32), secrets.token_urlsafe(64)
         db.execute(delete(m.OAuthState).where(m.OAuthState.expires_at <= m.now()))
         db.add(m.OAuthState(state_hash=digest(state), verifier=verifier, expires_at=future(minutes=10)))
@@ -325,35 +325,37 @@ def create_app(settings=None, engine=None, provider=None, billing=None):
     async def google_callback(request: Request, state: str = '', code: str = '', db: Session = Depends(get_db)):
         ready()
         if not settings.google_id or not settings.google_secret: raise HTTPException(503, 'Google OAuth is not configured')
+        app.state.limiter.check(('oauth-callback', request.client.host if request.client else 'unknown'), 30, 900)
         if not state or not secrets.compare_digest(state, request.cookies.get('oi_oauth_state', '')): raise HTTPException(400, 'OAuth state mismatch')
-        pending = db.scalar(select(m.OAuthState).where(m.OAuthState.state_hash == digest(state), m.OAuthState.expires_at > m.now()))
-        if not pending or not code: raise HTTPException(400, 'OAuth state expired or authorization code missing')
-        verifier = pending.verifier
-        db.delete(pending)
-        db.commit()  # One-time state, including failed exchanges.
+        verifier = consume_oauth_state(db, state)
+        if not verifier or not code: raise HTTPException(400, 'OAuth state expired or authorization code missing')
         try:
             async with httpx.AsyncClient(timeout=20, follow_redirects=False, transport=app.state.oauth_transport) as client:
                 token = await client.post('https://oauth2.googleapis.com/token', data={'client_id': settings.google_id, 'client_secret': settings.google_secret, 'redirect_uri': settings.google_redirect, 'grant_type': 'authorization_code', 'code': code, 'code_verifier': verifier})
                 token.raise_for_status()
                 access = token.json()['access_token']
+                if not isinstance(access, str) or not access: raise ValueError('Invalid access token')
                 info = await client.get('https://openidconnect.googleapis.com/v1/userinfo', headers={'Authorization': 'Bearer ' + access})
                 info.raise_for_status()
                 info = info.json()
-        except (httpx.HTTPError, ValueError, KeyError): raise HTTPException(502, 'Google authorization exchange failed')
-        if not info.get('email_verified') or not info.get('sub') or not info.get('email'): raise HTTPException(400, 'A verified Google email is required')
-        email = info['email'].lower()
+        except (httpx.HTTPError, ValueError, KeyError, TypeError): raise HTTPException(502, 'Google authorization exchange failed')
+        if not isinstance(info, dict) or info.get('email_verified') is not True or not isinstance(info.get('sub'), str) or not 1 <= len(info['sub']) <= 255 or not isinstance(info.get('email'), str):
+            raise HTTPException(400, 'A verified Google email is required')
+        try: email = str(TypeAdapter(EmailStr).validate_python(info['email'])).lower()
+        except ValidationError: raise HTTPException(400, 'A verified Google email is required')
         user = db.scalar(select(m.User).where(m.User.google_sub == info['sub']))
         if not user:
             # Avoid silently linking a password account merely because an email matches.
             if db.scalar(select(m.User.id).where(m.User.email == email)): raise HTTPException(409, 'An account with this email exists. Sign in using the original method.')
-            user = m.User(email=email, name=info.get('name', email)[:120], google_sub=info['sub'])
+            name = info.get('name') if isinstance(info.get('name'), str) else email
+            user = m.User(email=email, name=name[:120], google_sub=info['sub'])
             db.add(user)
             db.flush()
             db.add(m.Profile(owner_id=user.id, name=user.name))
             db.commit()
         response = RedirectResponse(settings.frontend_url.rstrip('/') + '/login/', status_code=302)
         response.delete_cookie('oi_oauth_state', path='/')
-        set_session(db, user, response, settings)
+        set_session(db, user, response, settings, request.cookies.get('oi_session'))
         return response
 
     @router.post('/auth/recovery/request')
@@ -383,11 +385,11 @@ def create_app(settings=None, engine=None, provider=None, billing=None):
     def recovery_confirm(data: s.RecoveryConfirm, request: Request, db: Session = Depends(get_db)):
         ready()
         app.state.limiter.check(('recovery', request.client.host if request.client else ''), 10, 900)
-        token = db.scalar(select(m.RecoveryToken).where(m.RecoveryToken.token_hash == digest(data.token), m.RecoveryToken.used.is_(False), m.RecoveryToken.expires_at > m.now()))
-        if not token: raise HTTPException(400, 'Invalid or expired recovery token')
-        db.get(m.User, token.owner_id).password_hash = hash_password(data.password)
-        db.execute(update(m.RecoveryToken).where(m.RecoveryToken.owner_id == token.owner_id).values(used=True))
-        db.execute(update(m.Device).where(m.Device.owner_id == token.owner_id).values(revoked=True))
+        owner_id = db.execute(update(m.RecoveryToken).where(m.RecoveryToken.token_hash == digest(data.token), m.RecoveryToken.used.is_(False), m.RecoveryToken.expires_at > m.now()).values(used=True).returning(m.RecoveryToken.owner_id)).scalar_one_or_none()
+        if not owner_id: raise HTTPException(400, 'Invalid or expired recovery token')
+        db.get(m.User, owner_id).password_hash = hash_password(data.password)
+        db.execute(update(m.RecoveryToken).where(m.RecoveryToken.owner_id == owner_id).values(used=True))
+        db.execute(update(m.Device).where(m.Device.owner_id == owner_id).values(revoked=True))
         db.commit()
         return {'passwordReset': True, 'sessionsRevoked': True}
 

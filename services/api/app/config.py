@@ -28,8 +28,10 @@ class Settings:
             raise ValueError('APP_MODE must be local or cloud')
         if '*' in self.origins:
             raise ValueError('Credentialed CORS requires explicit origins')
-        if self.mode == 'cloud' and os.getenv('DATABASE_URL') and (not self.secure_cookies or self.database_url.startswith('sqlite')):
-            raise ValueError('Cloud mode requires PostgreSQL and COOKIE_SECURE=true')
+        if self.mode == 'cloud' and not self.secure_cookies:
+            raise ValueError('Cloud mode requires COOKIE_SECURE=true')
+        if self.mode == 'cloud' and os.getenv('DATABASE_URL') and not self.database_url.startswith('postgresql+psycopg://'):
+            raise ValueError('Cloud account storage requires PostgreSQL')
 
 
 ROOT = Path(__file__).resolve().parents[1]

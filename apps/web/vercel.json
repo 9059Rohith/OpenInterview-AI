@@ -4,6 +4,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "out",
   "installCommand": "npm install --ignore-scripts --no-audit --no-fund",
+  "rewrites": [{"source": "/api/:path*", "destination": "https://openinterview-api.vercel.app/api/:path*"}],
   "headers": [{
     "source": "/(.*)",
     "headers": [

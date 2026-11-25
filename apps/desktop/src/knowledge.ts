@@ -1,5 +1,7 @@
 import type {LocalStore} from './store.js';
 type KnowledgeDocument={name:string;text:string;project?:string;kind?:string};
+export const MAX_KNOWLEDGE_TEXT = 32_000_000;
+export const MAX_KNOWLEDGE_SOURCES = 20_000;
 const words=(value:string)=>value.toLowerCase().replace(/multiagent/g,'multi agent').match(/[a-z0-9+#]{3,}/g)??[];
 const stop=new Set(['the','and','you','your','how','what','why','about','tell','would','could','project','projects','with','that','this','from','please','explain']);
 /** Local private corpus, separate from the 5 MB editable workspace record. */
@@ -19,11 +21,18 @@ export class PrivateKnowledge {
  private load(){
   const manifest=this.store.get('private.knowledge.index') as {shards?:unknown;totalSources?:unknown;projects?:unknown}|null;
   if(!manifest)return {chunks:[],totalSources:0,projects:[]};
-  if(!Number.isInteger(manifest.shards)||Number(manifest.shards)<0||Number(manifest.shards)>100||!Array.isArray(manifest.projects)||!manifest.projects.every(p=>typeof p==='string'))throw Error('Project library index is invalid');
-  const chunks:(KnowledgeDocument&{lower:string})[]=[];let totalSources=0;
+  if(!Number.isInteger(manifest.shards)||Number(manifest.shards)<0||Number(manifest.shards)>100||!Array.isArray(manifest.projects)||manifest.projects.length>256||!manifest.projects.every(p=>typeof p==='string'&&p.length>0&&p.length<=200))throw Error('Project library index is invalid');
+  const chunks:(KnowledgeDocument&{lower:string})[]=[];let totalSources=0,totalText=0;
   for(let index=0;index<Number(manifest.shards);index++){
    const records=this.store.get('private.knowledge.'+index);if(!Array.isArray(records))throw Error('Project library shard is unreadable');
-   for(const doc of records){if(!doc||typeof doc.name!=='string'||typeof doc.text!=='string'||doc.text.length>250000)throw Error('Project library source is invalid');totalSources++;for(const text of doc.text.match(/[\s\S]{1,1600}/g)??[])chunks.push({...doc,text,lower:text.toLowerCase()});}
+   for(const doc of records){
+    if(!doc||typeof doc.name!=='string'||doc.name.length>2048||typeof doc.text!=='string'||doc.text.length>250000||
+      (doc.project!==undefined&&(typeof doc.project!=='string'||doc.project.length>200))||
+      (doc.kind!==undefined&&(typeof doc.kind!=='string'||doc.kind.length>64)))throw Error('Project library source is invalid');
+    totalSources++;totalText+=doc.text.length;
+    if(totalSources>MAX_KNOWLEDGE_SOURCES||totalText>MAX_KNOWLEDGE_TEXT)throw Error('Project library exceeds its size limit');
+    for(let offset=0;offset<doc.text.length;offset+=1600){const text=doc.text.slice(offset,offset+1600);chunks.push({name:doc.name,project:doc.project,kind:doc.kind,text,lower:text.toLowerCase()});}
+   }
   }
   return {chunks,totalSources,projects:manifest.projects as string[]};
  }
