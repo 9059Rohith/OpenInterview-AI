@@ -6,6 +6,12 @@ Production build and TypeScript checks pass. Final unit suites pass: 74 web and 
 
 Production npm dependencies report zero advisories. Resolved API requirements audit covered 35 Python distributions with no known vulnerabilities. Full npm audit retains six build-tool dependency entries from the minimatch advisory; see SECURITY_REVIEW.md. Google OAuth credentials and a production database remain absent; real Google sign-in has not been activated or tested. The same-origin frontend API proxy and production secure-cookie configuration are prepared.
 
+The complete 25-workflow Chrome suite passed against the canonical live frontend, including synthetic Google authorization/session responses, hostile OAuth redirects, isolated diagram images, audio restart/cancellation, context and response memory. Initial failures exposed two stale test assumptions: restart readiness counted stopped streams, and the older diagram test expected inline SVG text. Updated assertions require newly active PCM streams and a decoded, successfully loaded diagram image. These were test-only corrections; deployed runtime code and installer bytes were unchanged.
+
+Both production deployments at runtime commit `ff772a6` are ready. Public frontend, repository, same-origin capabilities and API health returned HTTP 200; health honestly reports degraded accounts without PostgreSQL. Windows 0.4.1 setup exited 0; read-only installed checks preserved the resume, four projects, 2608 private project sources and previous responses. Installed full-monitor capture differential again passed at 1920×1200 (marker ratios 1 / 0 / 1; underlying synthetic background 1 while protected). The installed app was relaunched normally without starting capture. This does not establish capture exclusion for every portal.
+
+Installer `OpenInterview-AI-0.4.1-win-x64-setup.exe`: 125,857,430 bytes, SHA256 `d1aa169a0e81414dd0be6d570e00586f520a5295823a0d66566ef9bf40d9e9b3`. GitHub's uploaded asset digest matched the local file. The community installer remains unsigned.
+
 ## Automatic grounded answers 0.4.0 — 2026-11-26 IST
 
 - Final PC questions enter a bounded FIFO after a 180 ms delay. Questions arriving during generation wait for the current answer; short follow-ups, duplicate turn IDs, repeated questions with distinct IDs, microphone opt-in, cancellation and session changes have dedicated coverage. Auto/context/memory settings persist; recording never starts automatically.

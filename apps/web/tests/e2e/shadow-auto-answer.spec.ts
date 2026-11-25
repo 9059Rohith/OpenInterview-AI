@@ -50,10 +50,15 @@ async function desktop(page:Page){
  await page.reload();await expect(page.getByRole('heading',{name:'A little clarity, live.'})).toBeVisible();
 }
 async function start(page:Page,mic=false){
+ const previousRequests=await page.evaluate(()=>(window as any).autoTest.requests.length as number);
  if(mic)await page.getByLabel('Microphone',{exact:true}).check();
  await page.getByLabel(/I have permission to record this conversation/).check();await page.getByLabel(answerConsent).check();
  await page.getByRole('button',{name:'Start transcription'}).click();
- await expect.poll(()=>page.evaluate(()=>(window as any).autoTest.requests.every((r:any)=>r.appends>0)&&(window as any).autoTest.requests.length>0)).toBe(true);
+ // A restart must wait for new active streams, not PCM frames from stopped requests.
+ await expect.poll(()=>page.evaluate(({previousRequests,mic})=>{
+  const active=(window as any).autoTest.requests.slice(previousRequests).filter((r:any)=>!r.stopped);
+  return active.length===(mic?2:1)&&active.every((r:any)=>r.appends>0);
+ },{previousRequests,mic})).toBe(true);
 }
 async function transcript(page:Page,text:string,itemId:string,source:'PC'|'MIC'='PC',kind='final'){
  await page.evaluate(({text,itemId,source,kind})=>(window as any).autoTest.transcript(source,text,itemId,kind),{text,itemId,source,kind});
