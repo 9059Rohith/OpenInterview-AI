@@ -7,6 +7,7 @@ import os from 'node:os';
 import { Vault } from './vault.js';
 import { detectOllamaInstall } from './runtime.js';
 import { audioInput,transcribeAudio } from './speech.js';
+import { RealtimeSpeechSession } from './realtime-speech.js';
 import { visionInput,visionRequest } from './vision.js';
 import { LocalStore } from './store.js';
 import { ShadowWindow } from './shadow-window.js';
@@ -30,10 +31,11 @@ if(live){const url=new URL(live);if(url.protocol!=='https:'||url.username||url.p
 const home=development?'http://localhost:3000/workspace/':live??'oi://app/workspace/';
 const webRoot=app.isPackaged?path.join(process.resourcesPath,'web'):path.resolve(__dirname,'../../web/out');
 const requests=new Map<string,{controller:AbortController;owner:BrowserWindow}>();
+const speechSessions=new Map<string,{session:RealtimeSpeechSession;owner:BrowserWindow;source:'PC'|'MIC'}>();
 let mainWindow:BrowserWindow,vault:Vault,store:LocalStore,shadow:ShadowWindow;
 const mediaUntil=new Map<BrowserWindow,number>();
 function legitimate(window:BrowserWindow|null|undefined){return !!window&&!window.isDestroyed()&&(window===mainWindow||window===shadow?.window);}
-function cancelOwned(window:BrowserWindow){for(const active of requests.values())if(active.owner===window)active.controller.abort();mediaUntil.delete(window);}
+function cancelOwned(window:BrowserWindow){for(const active of requests.values())if(active.owner===window)active.controller.abort();for(const [id,active]of speechSessions)if(active.owner===window){active.session.cancel();speechSessions.delete(id);}mediaUntil.delete(window);}
 let importBusy=false,exportBusy=false;
 let externalBusy=false;
 async function openKnownExternal(candidate:string,owner:BrowserWindow=mainWindow){const url=externalLink(candidate);if(externalBusy)return;externalBusy=true;try{if(!url){await dialog.showMessageBox(owner,{type:'info',message:'This external destination is not permitted in the desktop app.',detail:'Open trusted external links manually in your browser. No page was opened.'});return;}const result=await dialog.showMessageBox(owner,{type:'question',buttons:['Cancel','Open browser'],defaultId:0,cancelId:0,message:'Open this link in your browser?',detail:url});if(result.response===1)await shell.openExternal(url);}finally{externalBusy=false;}}
@@ -49,9 +51,25 @@ function emit(event:unknown,owner:BrowserWindow=mainWindow){if(legitimate(owner)
 async function withRequest(owner:BrowserWindow,id:string,action:(signal:AbortSignal)=>Promise<unknown>,timeout=120000){if(requests.size>=8)throw new Error('Too many active requests. Cancel a request first.');if(requests.has(id))throw new Error('Request identifier already active');const controller=new AbortController();requests.set(id,{controller,owner});const timer=setTimeout(()=>controller.abort(),timeout);try{return await action(controller.signal);}finally{clearTimeout(timer);requests.delete(id);}}
 function handle(name:string,action:(payload:unknown,owner:BrowserWindow)=>unknown){ipcMain.handle('oi:'+name,async(event,payload)=>{const owner=BrowserWindow.fromWebContents(event.sender);if(!legitimate(owner)||!owner||event.senderFrame!==owner.webContents.mainFrame||!trustedNavigation(event.senderFrame.url,home)||isRunner(event.senderFrame.url))throw new Error('Untrusted IPC sender');try{return await action(payload,owner);}catch(error){throw new Error(safeError(error));}});}
 function secureWindow(window:BrowserWindow){
+  window.webContents.on('did-start-navigation',details=>{if(details.isMainFrame&&!details.isSameDocument)cancelOwned(window);});window.webContents.on('render-process-gone',()=>cancelOwned(window));
   window.webContents.setWindowOpenHandler(details=>{void openKnownExternal(details.url,window);return {action:'deny'};});window.webContents.on('will-navigate',(event,url)=>{if(isRunner(url)){event.preventDefault();return;}if(!trustedNavigation(url,home)){event.preventDefault();void openKnownExternal(url,window);}});window.webContents.on('will-redirect',(event,url)=>{if(isRunner(url)||!trustedNavigation(url,home))event.preventDefault();});window.webContents.on('will-attach-webview',event=>event.preventDefault());window.webContents.on('destroyed',()=>cancelOwned(window));
 }
 function handlers(){
+  const speechOwned=(raw:unknown,owner:BrowserWindow)=>{const data=object(raw),id=requestId(data.requestId),active=speechSessions.get(id);if(!active||active.owner!==owner)throw new Error('No realtime speech session owned by this window');return {data,id,active};};
+  handle('speechStart',async(raw,owner)=>{
+    const data=object(raw),id=requestId(data.requestId),source=data.source;
+    if(data.consent!==true||!['PC','MIC'].includes(source as string))throw new Error('Explicit consent and a valid audio source are required');
+    if(speechSessions.has(id)||speechSessions.size>=4||[...speechSessions.values()].some(item=>item.owner===owner&&item.source===source))throw new Error('This audio source already has an active realtime session');
+    const language=data.language===undefined?undefined:string(data.language,12).split('-')[0];
+    if(language&&!/^[a-z]{2,3}$/.test(language))throw new Error('Invalid transcription language');
+    const connection=new RealtimeSpeechSession({key:vault.get('openai'),language,onEvent:event=>emit({type:'speech-event',requestId:id,source,...event},owner)});
+    speechSessions.set(id,{session:connection,owner,source:source as 'PC'|'MIC'});
+    try{await connection.start();return {ready:true,requestId:id,source,transport:'realtime-pcm',sampleRate:24000};}catch(error){connection.cancel();speechSessions.delete(id);throw error;}
+  });
+  handle('speechAppend',async(raw,owner)=>{const {data,active}=speechOwned(raw,owner);await active.session.append(string(data.base64,32768));return {accepted:true};});
+  handle('speechCommit',async(raw,owner)=>{const {data,active}=speechOwned(raw,owner);if(data.discard===true)await active.session.clear();else await active.session.commit();return {accepted:true};});
+  handle('speechStop',async(raw,owner)=>{const {id,active}=speechOwned(raw,owner);try{await active.session.stop();return {stopped:true};}finally{speechSessions.delete(id);}});
+  handle('speechCancel',(raw,owner)=>{const {id,active}=speechOwned(raw,owner);active.session.cancel();speechSessions.delete(id);return {cancelled:true};});
   handle('getShadowState',()=>shadow.state());handle('openShadow',()=>shadow.open());handle('updateShadow',raw=>shadow.update(raw));handle('resizeShadow',raw=>shadow.resize(raw));handle('hideShadow',()=>shadow.hide());handle('closeShadow',()=>shadow.close());
   handle('capabilities',()=>({platform:process.platform,version:app.getVersion(),localSqlite:true,encryptedRecords:true,vault:vault.status(),microphone:true,systemAudio:process.platform==='win32',visibleAudioConsent:true,providerStreaming:true,providerCancellation:true,apiBase:'http://127.0.0.1:8000',ramGB:Math.round(os.totalmem()/1024**3),modelGuidance:[{name:'qwen2.5:0.5b',minimumRamGB:3},{name:'qwen3:0.6b',minimumRamGB:4},{name:'gemma3:1b',minimumRamGB:6},{name:'qwen3:4b',minimumRamGB:10}],unsigned:true}));
   handle('vaultStatus',()=>vault.status());handle('setCredential',(raw,owner)=>{const data=object(raw);return vault.set(data.provider,data.key);});handle('removeCredential',raw=>vault.remove(object(raw).provider));
@@ -144,6 +162,6 @@ app.whenReady().then(async()=>{
   if(shadowFixture){const state=await shadow.open();console.log('OPENINTERVIEW_SHADOW_FIXTURE '+JSON.stringify({...state,nativeHandle:shadow.window?.getNativeWindowHandle().toString('hex'),pid:process.pid}));}
   if(smokeShadow)await smokeShadowWindow();
 }).catch(error=>{console.error('Desktop startup failed:',safeError(error));app.exit(1);});
-app.on('window-all-closed',()=>{for(const active of requests.values())active.controller.abort();if(process.platform!=='darwin')app.quit();});
-app.on('before-quit',event=>{if(shadow?.prepareQuit()){event.preventDefault();return;}shadow?.dispose();for(const active of requests.values())active.controller.abort();store?.close();});
+app.on('window-all-closed',()=>{for(const active of requests.values())active.controller.abort();for(const active of speechSessions.values())active.session.cancel();speechSessions.clear();if(process.platform!=='darwin')app.quit();});
+app.on('before-quit',event=>{if(shadow?.prepareQuit()){event.preventDefault();return;}shadow?.dispose();for(const active of requests.values())active.controller.abort();for(const active of speechSessions.values())active.session.cancel();speechSessions.clear();store?.close();});
 app.on('activate',()=>{if(shadow?.window&&!shadow.window.isDestroyed())shadow.window.show();else if(mainWindow&&!mainWindow.isDestroyed())mainWindow.show();else app.relaunch(),app.exit();});

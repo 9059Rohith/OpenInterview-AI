@@ -21,7 +21,7 @@ try{
  await app.evaluate(async({BrowserWindow,screen,session,desktopCapturer},profile)=>{
   const display=screen.getPrimaryDisplay();
   const overlay=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().includes('desktopShadow=1'));
-  const background=new BrowserWindow({...display.bounds,frame:false,show:false,skipTaskbar:true,backgroundColor:'#1234d0',webPreferences:{sandbox:true}});
+  const background=new BrowserWindow({...display.bounds,frame:false,show:false,skipTaskbar:true,alwaysOnTop:true,backgroundColor:'#1234d0',webPreferences:{sandbox:true}});
   await background.loadURL('data:text/html,<html style="background:%231234d0"><title>Synthetic screen-share fixture</title></html>');background.show();
   overlay.setBounds({x:display.bounds.x+80,y:display.bounds.y+80,width:650,height:500});overlay.show();overlay.moveTop();
   const ses=session.fromPartition('share-fixture');

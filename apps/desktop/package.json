@@ -1,6 +1,6 @@
 {
   "name": "@openinterview/desktop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Visible, local-first OpenInterview AI desktop workspace",
   "private": true,
   "main": "dist/main.cjs",
@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "@types/ws": "8.18.2",
     "electron": "45.5.0",
     "electron-builder": "26.18.0",
     "esbuild": "^0.27.0",
@@ -30,14 +31,69 @@
     "appId": "org.openinterview.ai",
     "productName": "OpenInterview AI",
     "asar": true,
-    "directories": { "output": "release" },
-    "files": ["dist/**/*", "package.json"],
-    "extraResources": [{ "from": "../web/out", "to": "web", "filter": ["**/*"] }, { "from": "../../LICENSE", "to": "LICENSE.txt" }],
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../web/out",
+        "to": "web",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../../LICENSE",
+        "to": "LICENSE.txt"
+      }
+    ],
     "artifactName": "OpenInterview-AI-${version}-${os}-${arch}.${ext}",
-    "win": { "target": ["nsis", "portable"], "icon": "src/icon.ico", "signAndEditExecutable": true, "signExecutable": false },
-    "nsis": { "artifactName": "OpenInterview-AI-${version}-${os}-${arch}-setup.${ext}", "oneClick": false, "perMachine": false, "allowToChangeInstallationDirectory": true, "deleteAppDataOnUninstall": false },
-    "portable": { "artifactName": "OpenInterview-AI-${version}-${os}-${arch}-portable.${ext}" },
-    "mac": { "target": ["dmg"], "icon": "src/icon.png", "category": "public.app-category.education", "identity": null, "extendInfo": { "NSMicrophoneUsageDescription": "Record audio only during an explicitly started practice or permitted Shadow Mode session.", "NSAudioCaptureUsageDescription": "Capture system audio only after you select and approve a source." } },
-    "linux": { "target": ["AppImage", "deb"], "icon": "src/icon.png", "category": "Education", "maintainer": "OpenInterview AI contributors" }
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "src/icon.ico",
+      "signAndEditExecutable": true,
+      "signExecutable": false
+    },
+    "nsis": {
+      "artifactName": "OpenInterview-AI-${version}-${os}-${arch}-setup.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "OpenInterview-AI-${version}-${os}-${arch}-portable.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "src/icon.png",
+      "category": "public.app-category.education",
+      "identity": null,
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Record audio only during an explicitly started practice or permitted Shadow Mode session.",
+        "NSAudioCaptureUsageDescription": "Capture system audio only after you select and approve a source."
+      }
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "src/icon.png",
+      "category": "Education",
+      "maintainer": "OpenInterview AI contributors"
+    }
+  },
+  "dependencies": {
+    "ws": "8.23.0"
   }
 }

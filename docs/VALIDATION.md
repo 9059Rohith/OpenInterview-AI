@@ -1,5 +1,14 @@
 # Validation record — 2026-11-25
 
+## Realtime audio 0.3.0 — 2026-11-26 IST
+
+- Desktop capture now uses AudioWorklet 20 ms PCM16 packets at 24 kHz mono, separate PC/MIC realtime connections, `gpt-live-transcribe`, Aster's RMS .005 threshold, 300 ms preroll, 700 ms silence commits and 18-second turn limit. No MediaRecorder or four-second file gate is used by the desktop realtime path. Browser file transcription remains separately labeled.
+- Typechecks and the complete production build pass. All 56 web unit tests, 38 desktop unit tests and 17 browser workflows pass. New coverage includes real-worklet resampling at 44.1/48/96 kHz, interleaved sources, readiness/queue limits, deltas before commits, out-of-order finals, consent, cancellation, repeated start/stop and stop-time drains.
+- `tests/desktop/realtime-live.mjs` sent only synthetic Windows TTS PCM through the real vault-backed OpenAI transport. PC/MIC first partials arrived in 1917/2001 ms before manual commit; both final transcripts returned without error. This establishes actual provider streaming, beyond mocked sockets.
+- `tests/desktop/realtime-ui.mjs` tested the full actual AudioWorklet→Electron IPC→OS vault→OpenAI desktop path. First partials arrived in 1486 ms (PC) and 1441 ms (MIC); automatic finalization returned both labeled transcripts. A repeated PC utterance with trailing silence trimmed was finalized by Stop, all capture tracks ended, and no MediaRecorder was constructed. Synthetic fixtures alone were uploaded; no private screen, microphone or candidate data was used.
+- Observed latency depends on speech, server and network. Removing the fixed four-second batch wait does not imply zero latency. Existing screen-share protection and native window controls remain in place; installed-version checks are recorded after installation.
+- Windows setup completed with exit 0; product/file version is 0.3.0. All 318 installed web files exactly match the tested export, including the PCM worklet. `tests/desktop/realtime-installed.mjs` verified the installed packaged bridge, vault and real provider with first partials at 1561 ms (PC) and 1636 ms (MIC), correct final transcripts, no errors and unchanged workspace history. The installed 0.3.0 overlay also passed full-monitor capture exclusion again: marker ratios 1.0 / 0.0 / 1.0, underlying synthetic desktop ratio 1.0 while protected.
+
 ## Shadow 0.2.0 follow-up — 2026-11-26 IST
 
 - Frozen production build and both TypeScript workspaces pass. Web 44/44 and desktop 30/30 tests pass. All 15 Chromium browser workflows pass together in 59 seconds, including five new Shadow parity workflows and the original ten workflows.
