@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' blob:; worker-src blob:; connect-src 'none'; img-src 'none'; style-src 'none'"><title>Isolated code runner</title></head><body><script>
+window.addEventListener('message', function(event) {
+  if (event.source !== parent || !event.data || typeof event.data.token !== 'string' || typeof event.data.code !== 'string') return;
+  const token = event.data.token;
+  const source = `self.onmessage=async(event)=>{const {code,tests}=event.data;try{const solution=new Function(code+';return typeof twoSum === "function" ? twoSum : null;')();if(!solution)throw Error('Define a function named twoSum(nums, target).');const results=[];for(const t of tests){let actual=await solution([...t.nums],t.target);if(!Array.isArray(actual))throw Error('twoSum must return an array of indices.');const passed=t.expected.length===0?actual.length===0:actual.length===2&&actual[0]!==actual[1]&&Number.isInteger(actual[0])&&Number.isInteger(actual[1])&&actual.every(i=>i>=0&&i<t.nums.length)&&t.nums[actual[0]]+t.nums[actual[1]]===t.target;results.push({input:JSON.stringify(t.nums)+', '+t.target,expected:JSON.stringify(t.expected),actual:JSON.stringify(actual),passed});}self.postMessage({results});}catch(error){self.postMessage({error:String(error.message||error)});}}`;
+  const worker = new Worker(URL.createObjectURL(new Blob([source], {type:'text/javascript'})));
+  worker.onmessage = e => { parent.postMessage({token,...e.data}, '*'); worker.terminate(); };
+  worker.onerror = e => { parent.postMessage({token,error:e.message||'Runner failed'}, '*'); worker.terminate(); };
+  worker.postMessage({code:event.data.code, tests:event.data.tests});
+  setTimeout(() => worker.terminate(), 1800);
+}, {once:true});
+</script></body></html>

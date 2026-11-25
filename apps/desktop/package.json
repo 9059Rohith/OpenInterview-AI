@@ -1,0 +1,43 @@
+{
+  "name": "@openinterview/desktop",
+  "version": "0.1.0",
+  "description": "Visible, local-first OpenInterview AI desktop workspace",
+  "private": true,
+  "main": "dist/main.cjs",
+  "author": "OpenInterview AI contributors",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "dev": "npm run build && electron . --dev",
+    "start": "electron .",
+    "smoke": "electron . --smoke-test",
+    "pack": "npm run build && electron-builder --dir",
+    "dist:win": "npm run build && electron-builder --win nsis portable --x64 && node scripts/manifest.mjs",
+    "dist:mac": "npm run build && electron-builder --mac dmg --arm64 --x64 && node scripts/manifest.mjs",
+    "dist:linux": "npm run build && electron-builder --linux AppImage deb --x64 && node scripts/manifest.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "electron": "45.5.0",
+    "electron-builder": "26.18.0",
+    "esbuild": "^0.27.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "build": {
+    "appId": "org.openinterview.ai",
+    "productName": "OpenInterview AI",
+    "asar": true,
+    "directories": { "output": "release" },
+    "files": ["dist/**/*", "package.json"],
+    "extraResources": [{ "from": "../web/out", "to": "web", "filter": ["**/*"] }],
+    "artifactName": "OpenInterview-AI-${version}-${os}-${arch}.${ext}",
+    "win": { "target": ["nsis", "portable"], "icon": "src/icon.ico", "signAndEditExecutable": true, "signExecutable": false },
+    "nsis": { "artifactName": "OpenInterview-AI-${version}-${os}-${arch}-setup.${ext}", "oneClick": false, "perMachine": false, "allowToChangeInstallationDirectory": true, "deleteAppDataOnUninstall": false },
+    "portable": { "artifactName": "OpenInterview-AI-${version}-${os}-${arch}-portable.${ext}" },
+    "mac": { "target": ["dmg"], "icon": "src/icon.png", "category": "public.app-category.education", "identity": null, "extendInfo": { "NSMicrophoneUsageDescription": "Record audio only during an explicitly started practice or permitted Shadow Mode session.", "NSAudioCaptureUsageDescription": "Capture system audio only after you select and approve a source." } },
+    "linux": { "target": ["AppImage", "deb"], "icon": "src/icon.png", "category": "Education", "maintainer": "OpenInterview AI contributors" }
+  }
+}

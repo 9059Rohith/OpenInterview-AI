@@ -1,0 +1,29 @@
+name: Desktop packages
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w apps/web
+      - run: npm run typecheck -w apps/desktop
+      - run: npm run test -w apps/desktop
+      - if: runner.os == 'Windows'
+        run: npm run dist:win -w apps/desktop
+      - if: runner.os == 'macOS'
+        run: npm run dist:mac -w apps/desktop
+      - if: runner.os == 'Linux'
+        run: npm run dist:linux -w apps/desktop
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenInterview-AI-${{ runner.os }}-unsigned
+          path: apps/desktop/release/*

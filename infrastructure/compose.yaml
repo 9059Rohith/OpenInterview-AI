@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: openinterview
+      POSTGRES_USER: openinterview
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in a private environment file}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U openinterview -d openinterview]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  api:
+    build:
+      context: ../services/api
+      dockerfile: ../../infrastructure/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://openinterview:${POSTGRES_PASSWORD}@postgres:5432/openinterview
+      APP_ENV: production
+      APP_SECRET: ${APP_SECRET:?Set APP_SECRET in a private environment file}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+    ports:
+      - 127.0.0.1:8000:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+volumes:
+  postgres_data:

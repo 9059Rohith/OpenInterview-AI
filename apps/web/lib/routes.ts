@@ -1,0 +1,1 @@
+export const publicRoutes=['features','light-mode','shadow-mode','company-preparation','question-bank','coding-lab','system-design-lab','pricing','download','docs','open-source','security','privacy','terms','faq','changelog','contact'];

@@ -1,0 +1,6 @@
+export type TestResult={input:string;expected:string;actual:string;passed:boolean};
+export const testCases=[{nums:[2,7,11,15],target:9,expected:[0,1]},{nums:[3,2,4],target:6,expected:[1,2]},{nums:[3,3],target:6,expected:[0,1]},{nums:[-1,4,3],target:2,expected:[0,2]},{nums:[],target:1,expected:[]}];
+export function runJavaScript(code:string):Promise<TestResult[]>{return new Promise((resolve,reject)=>{
+ const frame=document.createElement('iframe');frame.setAttribute('sandbox','allow-scripts');frame.style.display='none';frame.title='Isolated JavaScript runner';const token=crypto.randomUUID();let timer:ReturnType<typeof setTimeout>;
+ const clean=()=>{clearTimeout(timer);window.removeEventListener('message',listener);frame.remove();};const listener=(event:MessageEvent)=>{if(event.source!==frame.contentWindow||event.data?.token!==token)return;clean();if(event.data.error)reject(Error(event.data.error));else if(Array.isArray(event.data.results))resolve(event.data.results);else reject(Error('Unexpected runner response.'));};window.addEventListener('message',listener);frame.onload=()=>frame.contentWindow?.postMessage({token,code,tests:testCases},'*');frame.src='/runner.html';document.body.appendChild(frame);timer=setTimeout(()=>{clean();reject(Error('Execution exceeded the 2-second time limit. Check for an infinite loop.'));},2000);
+ });}
