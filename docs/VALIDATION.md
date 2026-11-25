@@ -4,11 +4,11 @@
 
 | Check | Observed result |
 | --- | --- |
-| Web typecheck and static build | Passed; final image-integrated export 42 pages |
+| Web typecheck and static build | Passed; final image-integrated export 42 pages; conventional Python/TypeScript downloads also verified |
 | Web core unit tests | 20 passed: rubric, resume extraction signals, context selection, state validation, credential redaction and vision adapters/consent/cancellation |
 | Web browser workflow suite | 10 passed together after fixes (39.1 seconds); actual PDF/DOCX import/export, onboarding/documents/mock/history persistence, mentor two-turn retrieval and memory, key nonpersistence, JavaScript cases and infinite-loop timeout, Mermaid editing, 390px mobile layout, malformed-data recovery, actual WebM recording with mocked direct transcription; selected-image consent, extraction/edit/save/privacy/clear/cancel |
 | Actual browser/account API lifecycle | Passed using isolated loopback services and invented fixtures: registration, cookie session, onboarding, consented profile sync with CSRF, server persistence, authenticated reload, logout and session revocation; zero page errors |
-| API core/integration suite | 40 passed, one opt-in live test skipped in default run; provider/OAuth/billing fixtures are explicitly mocked |
+| API core/integration suite | 41 passed, one opt-in live test skipped in default run; provider/OAuth/billing fixtures are explicitly mocked |
 | Separate actual local inference | Real Ollama API integration passed with installed `qwen2.5:0.5b`, using an in-memory synthetic account and no cloud key |
 | Database | Three reversible SQLite migrations upgrade/downgrade/reupgrade passed; Alembic reports no schema drift; PostgreSQL offline SQL generated. A live PostgreSQL server was not tested |
 | Actual OpenAI text adapter | Synthetic prompt through desktop provider adapter: nonempty `gpt-4.1-mini` answer, 54 tokens, 5.74 seconds |
@@ -21,7 +21,7 @@
 | Dependency audit | `npm audit --omit=dev` reported zero advisories after upgrading jsPDF, PDF.js and Mermaid |
 | Public-source scan | Common credential patterns absent from tracked/unignored source; private keys/data remain outside the public source and build outputs |
 
-Detailed browser/design evidence is in `apps/web/design/QA_DESIGN_REVIEW.md`. Desktop test/build evidence is in `apps/desktop/docs/VERIFICATION.md`. API test boundaries are in API.md. The image-integrated 42-page build and ten browser workflows passed. Final package results are appended below when their installed-app checks complete.
+Detailed browser/design evidence is in `apps/web/design/QA_DESIGN_REVIEW.md`. Desktop test/build evidence is in `apps/desktop/docs/VERIFICATION.md`. API test boundaries are in API.md. The image-integrated 42-page build passed. All ten browser workflows passed locally and again against the public production deployment (1.1 minutes). Final package results are appended below when their installed-app checks complete.
 
 ## Deployment checks
 
@@ -35,3 +35,11 @@ Detailed browser/design evidence is in `apps/web/design/QA_DESIGN_REVIEW.md`. De
 Test adapters establish request/response and failure behavior, not live merchant/OAuth activation. Native device permissions, arbitrary meeting portals and long-running sessions have not been exhaustively tested. No two-hour soak test, independent penetration test, load test, macOS notarization or Linux installer verification is claimed. Small local models and deterministic rubric scores do not establish answer correctness.
 
 Google/SMTP credentials, persistent cloud PostgreSQL, Razorpay merchant credentials/plans/webhook registration, server-owned cloud image/inference credentials and a separately audited multi-language code runner remain operator setup requirements. Windows community packages are unsigned. GitHub workflow activation is blocked by the publishing credential's missing `workflow` scope; workflow templates are supplied, while the actual validation above was run locally.
+
+## Installed Windows application
+
+The final NSIS installer completed with exit code 0 in the new per-user `Programs/OpenInterview AI` directory. All 316 installed web files matched the tested final export (tree SHA256 `938314728b0be98733aef1db060e1745fec13c10f5a4c92423eddce1ef4a396f`). Product name is OpenInterview AI, version 0.1.0.0; the community executable is unsigned.
+
+Installed-app smoke exited 0: hydrated dashboard, Node isolation, invalid IPC rejection, DPAPI and encrypted SQLite roundtrips, CSP enforcement and isolated coding runner passed. Actual local inference emitted 39 chunks and cancellation worked; actual OpenAI streaming emitted three chunks in 2.124 seconds; synthetic image text extraction passed in 1.862 seconds. No private microphone or screen content was recorded.
+
+Installer: `OpenInterview-AI-0.1.0-win-x64-setup.exe`, 125,751,249 bytes, SHA256 `c14d98515fc030af1ca77423da107ef30ea21a4ec5f4008967d844c1c19cada0`. Portable packaging is tracked separately and must be verified before publication. Sanitized native evidence is in `apps/desktop/docs/WINDOWS_SMOKE.json`.
