@@ -25,5 +25,10 @@
   "cloudAiStreamEvents": 3,
   "cloudAiElapsedMs": 2124,
   "visionPassed": true,
-  "visionElapsedMs": 1862
+  "visionElapsedMs": 1862,
+  "portableSmokeExitCode": 0,
+  "portableCoreChecksPassed": true,
+  "normalWindowVisible": true,
+  "normalWindowTitle": "OpenInterview AI — Prepare with purpose",
+  "startMenuShortcut": true
 }

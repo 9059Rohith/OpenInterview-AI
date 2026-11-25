@@ -42,4 +42,8 @@ The final NSIS installer completed with exit code 0 in the new per-user `Program
 
 Installed-app smoke exited 0: hydrated dashboard, Node isolation, invalid IPC rejection, DPAPI and encrypted SQLite roundtrips, CSP enforcement and isolated coding runner passed. Actual local inference emitted 39 chunks and cancellation worked; actual OpenAI streaming emitted three chunks in 2.124 seconds; synthetic image text extraction passed in 1.862 seconds. No private microphone or screen content was recorded.
 
-Installer: `OpenInterview-AI-0.1.0-win-x64-setup.exe`, 125,751,249 bytes, SHA256 `c14d98515fc030af1ca77423da107ef30ea21a4ec5f4008967d844c1c19cada0`. Portable packaging is tracked separately and must be verified before publication. Sanitized native evidence is in `apps/desktop/docs/WINDOWS_SMOKE.json`.
+Installer: `OpenInterview-AI-0.1.0-win-x64-setup.exe`, 125,751,249 bytes, SHA256 `c14d98515fc030af1ca77423da107ef30ea21a4ec5f4008967d844c1c19cada0`. Portable: `OpenInterview-AI-0.1.0-win-x64-portable.exe`, 115,822,363 bytes, SHA256 `bedb600d42fe2b8444002689320cb493585de88c6152a5ccae8c3bef598cbaee`; its actual launcher smoke exited 0. Sanitized native evidence is in `apps/desktop/docs/WINDOWS_SMOKE.json`.
+
+Both binaries are published in the v0.1.0 release. GitHub's server-side SHA256 digests match the local files; public download HEAD requests returned HTTP 200 with exact sizes. SHA256SUMS.txt is publicly downloadable, and the live download page lists both real Windows files while listing no nonexistent Mac/Linux packages.
+
+The installed application was relaunched on its dashboard; its visible native window and Start Menu shortcut were verified. No capture or conversation session was started. Later default-branch documentation commits record final artifact verification; the version tag preserves the runtime code freeze.

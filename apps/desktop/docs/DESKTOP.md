@@ -12,9 +12,20 @@ Optional manual integration flags: `npm run smoke -w apps/desktop -- --smoke-loc
 
 Windows: `npm run dist:win -w apps/desktop` creates an unsigned x64 per-user NSIS installer and portable executable under `apps/desktop/release`. No admin installation is required. Files are community builds without Authenticode; Windows may show an unrecognized-publisher prompt. macOS: `npm run dist:mac -w apps/desktop` on macOS creates arm64/x64 DMGs, unsigned unless release signing is configured. Linux: `npm run dist:linux -w apps/desktop` on Linux creates x64 AppImage/deb. macOS/Linux artifacts are build targets, not downloads until generated on those hosts. A CI matrix example is in `ci-build.yml.example`; the coordinator may copy it to `.github/workflows`.
 
+The verified Windows build on this host reused the officially downloaded, checksum-verified Electron distribution to avoid downloading it again:
+
+```powershell
+$env:ELECTRON_BUILDER_COMPRESSION_LEVEL='5'
+npm run build -w apps/desktop
+npm exec -w apps/desktop -- electron-builder --win nsis portable --x64 --config.electronDist=../../node_modules/electron/dist
+node apps/desktop/scripts/manifest.mjs
+```
+
+Output filenames are `OpenInterview-AI-0.1.0-win-x64-setup.exe` and `OpenInterview-AI-0.1.0-win-x64-portable.exe`. The generated manifest and `checksums.sha256` describe only artifacts that actually exist. `node apps/desktop/scripts/verify-web.mjs "<installed-app>/resources/web"` compares all installed web bytes to the final export.
+
 ## Settings and network boundaries
 
-- `OPENINTERVIEW_DESKTOP_URL`: optional explicit HTTPS deployment replacing packaged UI. Only this origin can navigate and call the bridge. Packaged local UI is the default.
+- `OPENINTERVIEW_DESKTOP_URL`: optional explicit HTTPS deployment replacing packaged UI. Only this origin can navigate and call the bridge. It must serve the same exported build as the bundled web resources, because strict CSP inline-script hashes are derived from that build. Independently rebuilt deployments can have different Next.js hashes and require repackaging; the verified release uses the packaged local UI.
 - `OPENINTERVIEW_COMPATIBLE_BASE_URL`: administrator-set HTTPS OpenAI-compatible API base (for example `https://provider.example/v1`). The renderer cannot choose arbitrary API origins. Set once before launching. API keys are stored via the vault and sent directly to this endpoint.
 - `OPENINTERVIEW_API_URL`: optional additional HTTPS API origin permitted by renderer CSP. Desktop local API health checks always use `http://127.0.0.1:8000/health`.
 - Cloud BYOK request origins are exactly `api.openai.com`, `generativelanguage.googleapis.com`, and `api.anthropic.com`. HTTP redirects are rejected. Ollama uses only `http://127.0.0.1:11434`.

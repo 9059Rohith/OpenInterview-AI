@@ -23,3 +23,7 @@ This file tracks verification rather than marketing claims. The core application
 No hidden recording, screen-sharing evasion, process disguise or monitoring bypass is implemented. The original question catalog is educational material, not a claim of verified employer interview reports. See API.md for backend-specific advanced features that remain outside the verified release, and VALIDATION.md for exact test and deployment results.
 
 AI evaluation is guidance, not objective proof of skill. No two-hour reliability claim is made without a two-hour soak test.
+
+## Explicit gaps beyond service activation
+
+Organization collaboration/admin workflows and a verified employer question corpus are not implemented. Company preparation uses original educational questions and research guidance. Automatic batch OCR of scanned PDFs, embedding retrieval, automatic factual grading, full offline speech recognition and independently audited multi-language execution are not included. Selected-image AI text extraction, lexical retrieval, transparent practice rubrics and optional model feedback are implemented and labeled accordingly. Resume layout choices style the on-screen preview; PDF/DOCX exports preserve reviewed text in a standard layout.
