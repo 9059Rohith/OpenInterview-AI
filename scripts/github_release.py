@@ -24,10 +24,11 @@ def credential():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('action', choices=['identity', 'create', 'release', 'upload'])
+    parser.add_argument('action', choices=['identity', 'create', 'release', 'upload', 'publish'])
     parser.add_argument('--repository', default='OpenInterview-AI')
     parser.add_argument('--tag', default='v0.1.0')
     parser.add_argument('--file')
+    parser.add_argument('--draft', action='store_true')
     args = parser.parse_args()
     token = credential()
     def request(path, method='GET', payload=None, binary=None):
@@ -51,7 +52,9 @@ def main():
     except urllib.error.HTTPError as error:
         if error.code != 404: raise
         notes = (ROOT / 'docs' / 'RELEASE_NOTES.md').read_text(encoding='utf-8')
-        release = request('/repos/'+repo+'/releases', 'POST', {'tag_name': args.tag, 'name': 'OpenInterview AI '+args.tag, 'body': notes, 'draft': False, 'prerelease': False})
+        release = request('/repos/'+repo+'/releases', 'POST', {'tag_name': args.tag, 'name': 'OpenInterview AI '+args.tag, 'body': notes, 'draft': args.draft, 'prerelease': False})
+    if args.action == 'publish':
+        release = request('/repos/'+repo+'/releases/'+str(release['id']), 'PATCH', {'draft': False})
     if args.action == 'upload':
         path = pathlib.Path(args.file).resolve()
         with path.open('rb') as source:
